@@ -50,47 +50,15 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer
           xcodebuild -version
 
-      - name: Install xcbeautify
+      - name: Install xcbeautify and CocoaPods
         run: |
           brew install xcbeautify || true
+          brew install cocoapods || gem install cocoapods
 
-      - name: Create Assets.xcassets directory
+      - name: Install CocoaPods dependencies
         working-directory: ./iOS
         run: |
-          mkdir -p ScreenCast/Resources/Assets.xcassets
-
-      - name: Create Package.resolved for WebRTC
-        working-directory: ./iOS
-        run: |
-          # Create Package.resolved for WebRTC dependency
-          cat > Package.resolved << 'EOF'
-          {
-            "object": {
-              "pins": [
-                {
-                  "identity": "webrtc",
-                  "kind": "remoteSourceControl",
-                  "location": "https://github.com/stasel/WebRTC.git",
-                  "state": {
-                    "revision": "8d7a249698e8b0c08f5a541d3a2d3f3f5c35f4e",
-                    "version": "120.0.0"
-                  }
-                }
-              ]
-            },
-            "version": 1
-          }
-          EOF
-
-      - name: Resolve Swift Package dependencies
-        working-directory: ./iOS
-        run: |
-          xcodebuild -resolvePackageDependencies \
-            -project ScreenCast.xcodeproj \
-            -scheme ${{ env.SCHEME }} \
-            -destination 'generic/platform=iOS' \
-            -clonedSourcePackagesDirPath ./Packages \
-            | xcbeautify
+          pod install
 
       - name: Create ExportOptions.plist
         working-directory: ./iOS
@@ -127,7 +95,6 @@ jobs:
             -configuration ${{ env.CONFIGURATION }} \
             -destination 'generic/platform=iOS' \
             -archivePath ../build/ios/${{ env.SCHEME }}.xcarchive \
-            -clonedSourcePackagesDirPath ./Packages \
             -derivedDataPath ../build/ios/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
