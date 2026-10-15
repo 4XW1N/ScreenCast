@@ -54,15 +54,6 @@ jobs:
         run: |
           brew install xcbeautify || true
 
-      - name: Resolve Swift Package dependencies
-        working-directory: ./iOS
-        run: |
-          xcodebuild -resolvePackageDependencies \
-            -scheme ${{ env.SCHEME }} \
-            -destination 'generic/platform=iOS' \
-            -clonedSourcePackagesDirPath ./Packages \
-            | xcbeautify
-
       - name: Create ExportOptions.plist
         working-directory: ./iOS
         run: |
@@ -87,23 +78,79 @@ jobs:
           </plist>
           EOF
 
-      - name: Build and Archive
+      - name: Build and Archive (using SPM)
         working-directory: ./iOS
         env:
           CONFIGURATION: ${{ github.event.inputs.configuration || 'Release' }}
         run: |
-          # Build using the SPM package directly
-          xcodebuild clean archive \
+          # Build the SPM package directly - no Xcode project needed
+          xcodebuild clean build \
             -scheme ${{ env.SCHEME }} \
             -configuration ${{ env.CONFIGURATION }} \
             -destination 'generic/platform=iOS' \
-            -archivePath ../build/ios/${{ env.SCHEME }}.xcarchive \
             -clonedSourcePackagesDirPath ./Packages \
             -derivedDataPath ../build/ios/DerivedData \
+            -scmProvider Xcode \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             | xcbeautify
+
+      - name: Create Archive from Build
+        working-directory: ./iOS
+        run: |
+          # Find the built app and create archive manually
+          APP_PATH=$(find ../build/ios/DerivedData -name "*.app" -path "*/${{ env.CONFIGURATION }}-iphoneos/*" | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: Could not find built .app"
+            find ../build/ios/DerivedData -name "*.app" | head -20
+            exit 1
+          fi
+          
+          echo "Found app at: $APP_PATH"
+          
+          # Create archive structure
+          mkdir -p ../build/ios/${{ env.SCHEME }}.xcarchive/Products/Applications
+          cp -R "$APP_PATH" ../build/ios/${{ env.SCHEME }}.xcarchive/Products/Applications/
+          
+          # Create Info.plist for archive
+          cat > ../build/ios/${{ env.SCHEME }}.xcarchive/Info.plist << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>ApplicationProperties</key>
+              <dict>
+                  <key>ApplicationPath</key>
+                  <string>Products/Applications/${{ env.SCHEME }}.app</string>
+                  <key>CFBundleIdentifier</key>
+                  <string>${{ env.BUNDLE_ID }}</string>
+                  <key>CFBundleShortVersionString</key>
+                  <string>1.0</string>
+                  <key>CFBundleVersion</key>
+                  <string>1</string>
+                  <key>DTPlatformName</key>
+                  <string>iphoneos</string>
+                  <key>DTPlatformVersion</key>
+                  <string>17.0</string>
+                  <key>DTSDKName</key>
+                  <string>iphoneos17.0</string>
+                  <key>DTXcode</key>
+                  <string>15.4</string>
+                  <key>DTXcodeBuild</key>
+                  <string>15F31d</string>
+              </dict>
+              <key>ArchiveVersion</key>
+              <integer>2</integer>
+              <key>CreationDate</key>
+              <date>$(date -u +"%Y-%m-%dT%H:%M:%SZ")</date>
+              <key>Name</key>
+              <string>${{ env.SCHEME }}</string>
+              <key>SchemeName</key>
+              <string>${{ env.SCHEME }}</string>
+          </dict>
+          </plist>
+          PLIST
 
       - name: Export IPA
         working-directory: ./iOS
