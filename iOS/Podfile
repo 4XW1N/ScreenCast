@@ -1,12 +1,16 @@
 # Uncomment the next line to define a global platform for your project
 platform :ios, '15.0'
 
+# WebRTC spec source
+source 'https://github.com/CocoaPods/Specs.git'
+source 'https://github.com/stasel/WebRTC-Specs.git'
+
 target 'ScreenCast' do
   # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
 
   # WebRTC for iOS
-  pod 'WebRTC', '~> 120.0'
+  pod 'WebRTC', '~> 1.0'
 
   # Pods for ScreenCast
 end
