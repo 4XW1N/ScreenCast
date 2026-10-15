@@ -148,10 +148,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to TestFlight (optional)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.APP_STORE_CONNECT_ISSUER_ID != ''
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.APP_STORE_CONNECT_ISSUER_ID != ''
         uses: apple-actions/upload-testflight-build@v1
         with:
           app-path: ./build/ios/ipa/*.ipa
           issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           api-key-id: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           api-private-key: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+        env:
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
