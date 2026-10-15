@@ -1,0 +1,187 @@
+name: Build & Sign iOS App (for TestFlight/App Store)
+
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: 'Build configuration'
+        required: true
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+      export_method:
+        description: 'Export method'
+        required: true
+        default: 'app-store'
+        type: choice
+        options:
+          - app-store
+          - ad-hoc
+          - enterprise
+
+# Required secrets:
+# - APP_STORE_CONNECT_ISSUER_ID
+# - APP_STORE_CONNECT_API_KEY_ID
+# - APP_STORE_CONNECT_API_PRIVATE_KEY
+# - MATCH_GIT_URL (optional, for match)
+# - MATCH_PASSWORD (optional, for match)
+# - DEVELOPMENT_TEAM
+# - BUNDLE_ID (optional, defaults to com.screencast.receiver)
+
+env:
+  XCODE_VERSION: '15.4'
+  IOS_DEPLOYMENT_TARGET: '15.0'
+  SCHEME: 'ScreenCast'
+  BUNDLE_ID: ${{ secrets.BUNDLE_ID || 'com.screencast.receiver' }}
+
+jobs:
+  build-signed-ipa:
+    name: Build Signed IPA
+    runs-on: macos-14
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode version
+        run: |
+          sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Install dependencies
+        run: |
+          brew install xcbeautify fastlane || true
+
+      - name: Import code signing certificates (using fastlane match)
+        if: secrets.MATCH_GIT_URL != ''
+        uses: fastlane/action/fastlane@v1
+        with:
+          lane: 'ios certificates'
+        env:
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_TYPE: ${{ github.event.inputs.export_method == 'app-store' && 'appstore' || 'adhoc' }}
+          MATCH_APP_IDENTIFIER: ${{ env.BUNDLE_ID }}
+          FASTLANE_USER: ${{ secrets.APPLE_ID }}
+          FASTLANE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+
+      - name: Setup code signing (manual)
+        if: secrets.MATCH_GIT_URL == ''
+        run: |
+          # Create keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          security create-keychain -p "" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "" $KEYCHAIN_PATH
+          
+          # Import distribution certificate
+          echo "${{ secrets.P12_CERTIFICATE }}" | base64 --decode -o $RUNNER_TEMP/certificate.p12
+          security import $RUNNER_TEMP/certificate.p12 -k $KEYCHAIN_PATH -P "${{ secrets.P12_PASSWORD }}" -A
+          
+          # Import provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "${{ secrets.PROVISIONING_PROFILE }}" | base64 --decode -o ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+          
+          # Set default keychain
+          security list-keychains -s $KEYCHAIN_PATH
+          security default-keychain -s $KEYCHAIN_PATH
+
+      - name: Resolve Swift Package dependencies
+        working-directory: ./iOS
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -scheme ${{ env.SCHEME }} \
+            -destination 'generic/platform=iOS' \
+            -clonedSourcePackagesDirPath ./Packages \
+            | xcbeautify
+
+      - name: Create ExportOptions.plist
+        working-directory: ./iOS
+        run: |
+          cat > ExportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>${{ github.event.inputs.export_method }}</string>
+              <key>compileBitcode</key>
+              <false/>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>stripSwiftSymbols</key>
+              <true/>
+              <key>teamID</key>
+              <string>${{ secrets.DEVELOPMENT_TEAM }}</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>${{ env.BUNDLE_ID }}</key>
+                  <string>$(PROVISIONING_PROFILE_SPECIFIER)</string>
+              </dict>
+              <key>thinning</key>
+              <string><none></string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Build and Archive (signed)
+        working-directory: ./iOS
+        env:
+          CONFIGURATION: ${{ github.event.inputs.configuration }}
+        run: |
+          xcodebuild clean archive \
+            -scheme ${{ env.SCHEME }} \
+            -configuration ${{ env.CONFIGURATION }} \
+            -destination 'generic/platform=iOS' \
+            -archivePath ../build/ios/${{ env.SCHEME }}.xcarchive \
+            -clonedSourcePackagesDirPath ./Packages \
+            -derivedDataPath ../build/ios/DerivedData \
+            DEVELOPMENT_TEAM=${{ secrets.DEVELOPMENT_TEAM }} \
+            PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE_NAME }}" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            | xcbeautify
+
+      - name: Export IPA (signed)
+        working-directory: ./iOS
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath ../build/ios/${{ env.SCHEME }}.xcarchive \
+            -exportPath ../build/ios/ipa \
+            -exportOptionsPlist ExportOptions.plist \
+            | xcbeautify
+
+      - name: Verify IPA
+        run: |
+          ls -la ./build/ios/ipa/
+          IPA_PATH=$(find ./build/ios/ipa -name "*.ipa" | head -1)
+          if [ -f "$IPA_PATH" ]; then
+            echo "IPA found: $IPA_PATH"
+            echo "IPA_SIZE=$(stat -f%z "$IPA_PATH")" >> $GITHUB_ENV
+            # Verify signature
+            codesign -dv "$IPA_PATH" 2>&1 | head -20
+          else
+            echo "ERROR: No IPA found!"
+            exit 1
+          fi
+
+      - name: Upload to TestFlight
+        if: github.event.inputs.export_method == 'app-store'
+        uses: apple-actions/upload-testflight-build@v1
+        with:
+          app-path: ./build/ios/ipa/*.ipa
+          issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          api-key-id: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          api-private-key: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+
+      - name: Upload IPA as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScreenCast-iOS-Signed-${{ github.event.inputs.export_method }}
+          path: ./build/ios/ipa/*.ipa
+          retention-days: 30

@@ -1,0 +1,17 @@
+{
+  "name": "screencast-signaling-server",
+  "version": "1.0.0",
+  "description": "WebSocket signaling server for ScreenCast",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "ws": "^8.14.2",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">ScreenCast</string>
+    <string name="start_casting">Start Casting</string>
+    <string name="stop_casting">Stop Casting</string>
+    <string name="status_idle">Ready to cast</string>
+    <string name="status_requesting">Requesting screen capture...</string>
+    <string name="status_connecting">Connecting to iPad...</string>
+    <string name="status_streaming">Streaming to iPad</string>
+    <string name="status_error">Error: %s</string>
+    <string name="ip_address_hint">iPad IP Address</string>
+    <string name="port_hint">Port (default: 8888)</string>
+    <string name="permission_denied">Screen capture permission denied</string>
+    <string name="service_started">Capture service started</string>
+    <string name="service_stopped">Capture service stopped</string>
+</resources>

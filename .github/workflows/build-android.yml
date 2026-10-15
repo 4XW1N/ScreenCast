@@ -1,0 +1,122 @@
+name: Build Android App
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'Release'
+        type: choice
+        options:
+          - Debug
+          - Release
+
+env:
+  JAVA_VERSION: '17'
+  GRADLE_VERSION: '8.2'
+
+jobs:
+  build-apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+
+      - name: Grant execute permission for gradlew
+        working-directory: ./Android
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        if: github.event.inputs.build_type == 'Debug' || github.event_name != 'workflow_dispatch'
+        working-directory: ./Android
+        run: ./gradlew assembleDebug
+
+      - name: Build Release APK
+        if: github.event.inputs.build_type == 'Release'
+        working-directory: ./Android
+        run: ./gradlew assembleRelease
+
+      - name: Upload Debug APK
+        if: github.event.inputs.build_type == 'Debug' || github.event_name != 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScreenCast-Android-Debug
+          path: Android/app/build/outputs/apk/debug/*.apk
+          retention-days: 30
+
+      - name: Upload Release APK
+        if: github.event.inputs.build_type == 'Release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScreenCast-Android-Release
+          path: Android/app/build/outputs/apk/release/*.apk
+          retention-days: 30
+
+      - name: Create Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Android/app/build/outputs/apk/release/*.apk
+            Android/app/build/outputs/apk/debug/*.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-aab:
+    name: Build AAB (for Play Store)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.build_type == 'Release'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+
+      - name: Grant execute permission for gradlew
+        working-directory: ./Android
+        run: chmod +x gradlew
+
+      - name: Build Release Bundle
+        working-directory: ./Android
+        run: ./gradlew bundleRelease
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScreenCast-Android-AAB
+          path: Android/app/build/outputs/bundle/release/*.aab
+          retention-days: 30
