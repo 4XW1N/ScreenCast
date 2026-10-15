@@ -26,6 +26,9 @@ jobs:
     name: Build APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: ./Android
 
     steps:
       - name: Checkout repository
@@ -43,18 +46,20 @@ jobs:
         with:
           gradle-version: ${{ env.GRADLE_VERSION }}
 
+      - name: Generate Gradle Wrapper
+        run: |
+          # Use gradle from setup-gradle action to generate wrapper
+          gradle wrapper --gradle-version ${{ env.GRADLE_VERSION }}
+
       - name: Grant execute permission for gradlew
-        working-directory: ./Android
         run: chmod +x gradlew
 
       - name: Build Debug APK
         if: github.event.inputs.build_type == 'Debug' || github.event_name != 'workflow_dispatch'
-        working-directory: ./Android
         run: ./gradlew assembleDebug
 
       - name: Build Release APK
         if: github.event.inputs.build_type == 'Release'
-        working-directory: ./Android
         run: ./gradlew assembleRelease
 
       - name: Upload Debug APK
@@ -89,6 +94,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.build_type == 'Release'
+    defaults:
+      run:
+        working-directory: ./Android
 
     steps:
       - name: Checkout repository
@@ -106,12 +114,13 @@ jobs:
         with:
           gradle-version: ${{ env.GRADLE_VERSION }}
 
+      - name: Generate Gradle Wrapper
+        run: gradle wrapper --gradle-version ${{ env.GRADLE_VERSION }}
+
       - name: Grant execute permission for gradlew
-        working-directory: ./Android
         run: chmod +x gradlew
 
       - name: Build Release Bundle
-        working-directory: ./Android
         run: ./gradlew bundleRelease
 
       - name: Upload AAB
