@@ -41,8 +41,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Select Xcode version
         run: |
@@ -52,31 +50,41 @@ jobs:
       - name: Install xcbeautify
         run: brew install xcbeautify || true
 
-      - name: Build using Swift Package Manager
+      - name: Create ExportOptions.plist
         working-directory: ./iOS
         run: |
-          # Build the SPM package directly - no Xcode project needed
-          swift build -c release --arch arm64 --target ScreenCast 2>&1 | xcbeautify || \
-          swift build -c release --target ScreenCast 2>&1 | xcbeautify
+          cat > ExportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>${{ github.event.inputs.export_method || 'ad-hoc' }}</string>
+              <key>compileBitcode</key>
+              <false/>
+              <key>signingStyle</key>
+              <string>automatic</string>
+              <key>stripSwiftSymbols</key>
+              <true/>
+              <key>teamID</key>
+              <string>$(DEVELOPMENT_TEAM)</string>
+              <key>thinning</key>
+              <string><none></string>
+          </dict>
+          </plist>
+          EOF
 
-      - name: Build Xcode project with WebRTC via SPM
+      - name: Build and Archive
         working-directory: ./iOS
         env:
           CONFIGURATION: ${{ github.event.inputs.configuration || 'Release' }}
         run: |
-          # Resolve Swift Package dependencies first
-          xcodebuild -resolvePackageDependencies \
-            -scheme ${{ env.SCHEME }} \
-            -destination 'generic/platform=iOS' \
-            -clonedSourcePackagesDirPath ./Packages 2>&1 | xcbeautify || true
-
-          # Build the app
           xcodebuild clean archive \
+            -project ScreenCast.xcodeproj \
             -scheme ${{ env.SCHEME }} \
             -configuration ${{ env.CONFIGURATION }} \
             -destination 'generic/platform=iOS' \
             -archivePath ../build/ios/${{ env.SCHEME }}.xcarchive \
-            -clonedSourcePackagesDirPath ./Packages \
             -derivedDataPath ../build/ios/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \

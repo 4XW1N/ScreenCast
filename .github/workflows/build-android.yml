@@ -48,12 +48,6 @@ jobs:
       - name: Generate Gradle Wrapper
         run: gradle wrapper --gradle-version 8.2
 
-      - name: Download WebRTC AAR
-        run: |
-          mkdir -p app/libs
-          curl -L -o app/libs/webrtc.aar "https://storage.googleapis.com/webrtc-builds/android/webrtc-114.0.0.aar" || \
-          curl -L -o app/libs/webrtc.aar "https://github.com/stasel/WebRTC-Android-Prebuilts/raw/main/webrtc-114.0.0.aar"
-
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
