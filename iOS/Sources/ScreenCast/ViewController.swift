@@ -12,7 +12,6 @@ class ViewController: UIViewController {
     private var connectButton: UIButton!
     private var disconnectButton: UIButton!
     private var statusLabel: UILabel!
-    private var settingsButton: UIButton!
     private var isConnected = false
 
     override func viewDidLoad() {
@@ -25,13 +24,33 @@ class ViewController: UIViewController {
     }
 
     private func setupUI() {
-        let headerLabel = UILabel()
-        headerLabel.text = "📱 ScreenCast Receiver"
-        headerLabel.font = .systemFont(ofSize: 28, weight: .bold)
-        headerLabel.textAlignment = .center
-        headerLabel.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(headerLabel)
+        // Header
+        let headerStack = UIStackView()
+        headerStack.axis = .vertical
+        headerStack.alignment = .center
+        headerStack.spacing = 8
+        headerStack.translatesAutoresizingMaskIntoConstraints = false
 
+        let iconLabel = UILabel()
+        iconLabel.text = "📱"
+        iconLabel.font = .systemFont(ofSize: 48)
+
+        let titleLabel = UILabel()
+        titleLabel.text = "ScreenCast Receiver"
+        titleLabel.font = .systemFont(ofSize: 28, weight: .bold)
+        titleLabel.textColor = .label
+
+        let subtitleLabel = UILabel()
+        subtitleLabel.text = "Receive Android screen on iPad"
+        subtitleLabel.font = .systemFont(ofSize: 14)
+        subtitleLabel.textColor = .secondaryLabel
+
+        headerStack.addArrangedSubview(iconLabel)
+        headerStack.addArrangedSubview(titleLabel)
+        headerStack.addArrangedSubview(subtitleLabel)
+        view.addSubview(headerStack)
+
+        // IP Text Field
         urlTextField = UITextField()
         urlTextField.placeholder = "Android IP Address"
         urlTextField.borderStyle = .roundedRect
@@ -39,42 +58,53 @@ class ViewController: UIViewController {
         urlTextField.keyboardType = .numbersAndPunctuation
         urlTextField.clearButtonMode = .whileEditing
         urlTextField.translatesAutoresizingMaskIntoConstraints = false
+        urlTextField.layer.cornerRadius = 10
+        urlTextField.layer.borderWidth = 1
+        urlTextField.layer.borderColor = UIColor.systemGray4.cgColor
 
+        // Port Input
         portTextField = UITextField()
-        portTextField.placeholder = "Port (8080)"
+        portTextField.placeholder = "8080"
         portTextField.borderStyle = .roundedRect
-        urlTextField.keyboardType = .numberPad
+        portTextField.keyboardType = .numberPad
         portTextField.text = "8080"
         portTextField.translatesAutoresizingMaskIntoConstraints = false
+        portTextField.layer.cornerRadius = 10
+        portTextField.layer.borderWidth = 1
+        portTextField.layer.borderColor = UIColor.systemGray4.cgColor
 
+        // Connect Button
         connectButton = UIButton(type: .system)
         connectButton.setTitle("🔗 Connect", for: .normal)
         connectButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
         connectButton.backgroundColor = .systemGreen
         connectButton.setTitleColor(.white, for: .normal)
-        connectButton.layer.cornerRadius = 10
+        connectButton.layer.cornerRadius = 12
         connectButton.addTarget(self, action: #selector(connectStream), for: .touchUpInside)
         connectButton.translatesAutoresizingMaskIntoConstraints = false
 
+        // Disconnect Button
         disconnectButton = UIButton(type: .system)
         disconnectButton.setTitle("⏹ Disconnect", for: .normal)
         disconnectButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
         disconnectButton.backgroundColor = .systemRed
         disconnectButton.setTitleColor(.white, for: .normal)
-        disconnectButton.layer.cornerRadius = 10
+        disconnectButton.layer.cornerRadius = 12
         disconnectButton.addTarget(self, action: #selector(disconnectStream), for: .touchUpInside)
         disconnectButton.isHidden = true
         disconnectButton.translatesAutoresizingMaskIntoConstraints = false
 
+        // Web View
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
         webView = WKWebView(frame: .zero, configuration: config)
         webView.translatesAutoresizingMaskIntoConstraints = false
         webView.backgroundColor = .black
-        webView.layer.cornerRadius = 12
+        webView.layer.cornerRadius = 16
         webView.layer.borderWidth = 2
         webView.layer.borderColor = UIColor.systemGray4.cgColor
 
+        // Status Label
         statusLabel = UILabel()
         statusLabel.text = "Enter Android IP and tap Connect"
         statusLabel.textAlignment = .center
@@ -83,6 +113,7 @@ class ViewController: UIViewController {
         statusLabel.numberOfLines = 0
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        // Settings Button
         settingsButton = UIButton(type: .system)
         settingsButton.setTitle("⚙ Settings", for: .normal)
         settingsButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
@@ -90,7 +121,7 @@ class ViewController: UIViewController {
         settingsButton.addTarget(self, action: #selector(openSettings), for: .touchUpInside)
         settingsButton.translatesAutoresizingMaskIntoConstraints = false
 
-        view.addSubview(headerLabel)
+        view.addSubview(headerStack)
         view.addSubview(urlTextField)
         view.addSubview(portTextField)
         view.addSubview(connectButton)
@@ -100,29 +131,29 @@ class ViewController: UIViewController {
         view.addSubview(settingsButton)
 
         NSLayoutConstraint.activate([
-            headerLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            headerLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            headerLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            headerStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
+            headerStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            headerStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 
-            urlTextField.topAnchor.constraint(equalTo: headerLabel.bottomAnchor, constant: 20),
+            urlTextField.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 24),
             urlTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             urlTextField.trailingAnchor.constraint(equalTo: portTextField.leadingAnchor, constant: -12),
-            urlTextField.heightAnchor.constraint(equalToConstant: 44),
+            urlTextField.heightAnchor.constraint(equalToConstant: 48),
 
-            portTextField.topAnchor.constraint(equalTo: headerLabel.bottomAnchor, constant: 20),
+            portTextField.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 24),
             portTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             portTextField.widthAnchor.constraint(equalToConstant: 80),
-            portTextField.heightAnchor.constraint(equalToConstant: 44),
+            portTextField.heightAnchor.constraint(equalToConstant: 48),
 
             connectButton.topAnchor.constraint(equalTo: urlTextField.bottomAnchor, constant: 16),
             connectButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             connectButton.trailingAnchor.constraint(equalTo: view.centerXAnchor, constant: -8),
-            connectButton.heightAnchor.constraint(equalToConstant: 50),
+            connectButton.heightAnchor.constraint(equalToConstant: 52),
 
             disconnectButton.topAnchor.constraint(equalTo: urlTextField.bottomAnchor, constant: 16),
             disconnectButton.leadingAnchor.constraint(equalTo: view.centerXAnchor, constant: 8),
             disconnectButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            disconnectButton.heightAnchor.constraint(equalToConstant: 50),
+            disconnectButton.heightAnchor.constraint(equalToConstant: 52),
 
             webView.topAnchor.constraint(equalTo: connectButton.bottomAnchor, constant: 20),
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
@@ -133,7 +164,7 @@ class ViewController: UIViewController {
             statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             statusLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 
-            settingsButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            settingsButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24),
             settingsButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }
@@ -177,7 +208,14 @@ class ViewController: UIViewController {
         isConnected = false
         connectButton.isHidden = false
         disconnectButton.isHidden = true
-        webView.loadHTMLString("<html><body style='background:black;color:white;text-align:center;padding-top:40%'><h2>Disconnected</h2><p>Tap Connect to start casting</p></body></html>", baseURL: nil)
+        webView.loadHTMLString("""
+        <html>
+        <body style='background:#000000;color:#ffffff;text-align:center;padding-top:40%;font-family:sans-serif'>
+        <h1>⏹ Disconnected</h2>
+        <p>Tap Connect to start casting</p>
+        </body>
+        </html>
+        """, baseURL: nil)
         statusLabel.text = "Disconnected"
         statusLabel.textColor = .secondaryLabel
     }

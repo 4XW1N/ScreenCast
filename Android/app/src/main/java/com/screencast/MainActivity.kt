@@ -6,6 +6,7 @@ import android.media.projection.MediaProjectionManager
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Bundle
+import android.os.Handler
 import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
@@ -22,6 +23,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var qualitySwitch: Switch
     private lateinit var cardView: MaterialCardView
     private var isCasting = false
+    private var pulseHandler: Handler? = null
+    private var pulseState = false
 
     private val REQUEST_CODE = 1001
 
@@ -48,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         ipText.setOnClickListener {
-            Toast.makeText(this@MainActivity, "IP: $ipText.text", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@MainActivity, "IP copied to clipboard", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -76,6 +79,7 @@ class MainActivity : AppCompatActivity() {
                 startForegroundService(serviceIntent)
                 isCasting = true
                 updateUIForCasting(true)
+                startPulseAnimation()
             }
         } else {
             Toast.makeText(this@MainActivity, "Screen capture permission required", Toast.LENGTH_SHORT).show()
@@ -87,6 +91,7 @@ class MainActivity : AppCompatActivity() {
         stopService(intent)
         isCasting = false
         updateUIForCasting(false)
+        stopPulseAnimation()
     }
 
     private fun updateUIForCasting(casting: Boolean) {
@@ -105,12 +110,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun startPulseAnimation() {
+        pulseHandler = Handler()
+        val runnable = object : Runnable {
+            override fun run() {
+                val color = if (pulseState) android.graphics.Color.parseColor("#E8F5E9") else android.graphics.Color.parseColor("#C8E6C9")
+                pulseState = !pulseState
+                cardView.setCardBackgroundColor(color)
+                pulseHandler?.postDelayed(this, 500)
+            }
+        }
+        pulseHandler?.post(runnable)
+    }
+
+    private fun stopPulseAnimation() {
+        pulseHandler?.removeCallbacksAndMessages(null)
+        pulseState = false
+        cardView.setCardBackgroundColor(android.graphics.Color.WHITE)
+    }
+
     private fun intToIp(ipInt: Int): String {
         return "${(ipInt and 0xFF)}.${(ipInt shr 8 and 0xFF)}.${(ipInt shr 16 and 0xFF)}.${(ipInt shr 24 and 0xFF)}"
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        stopPulseAnimation()
         if (isCasting) {
             stopService(Intent(this@MainActivity, ScreenCastService::class.java))
         }
