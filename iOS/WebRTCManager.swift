@@ -2,7 +2,7 @@
 //  ScreenCast
 
 import Foundation
-import WebRTC
+
 
 protocol WebRTCManagerDelegate: AnyObject {
     func webRTCManager(_ manager: WebRTCManager, didChangeConnectionState state: RTCIceConnectionState)
