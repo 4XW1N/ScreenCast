@@ -107,8 +107,6 @@ jobs:
           
           echo "IPA created at: $(pwd)/ScreenCast.ipa"
           ls -la ScreenCast.ipa
-          cd ../build/ios
-          ls -la ScreenCast.ipa
 
       - name: Upload IPA as artifact
         uses: actions/upload-artifact@v4
