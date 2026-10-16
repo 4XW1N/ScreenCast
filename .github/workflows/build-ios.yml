@@ -54,7 +54,7 @@ jobs:
         working-directory: ./iOS
         run: |
           # Find the built executable (SPM produces a binary, not .app)
-          BINARY_PATH=$(find build/DerivedData/Build/Products/Release-iphoneos -name "ScreenCast" -type f | head -1)
+          BINARY_PATH=$(find build/DerivedData/Build/Products/Release-iphoneos -maxdepth 1 -name "ScreenCast" -type f | head -1)
           if [ -z "$BINARY_PATH" ]; then
             echo "ERROR: Built binary not found"
             find build/DerivedData -name "ScreenCast" -type f
@@ -103,10 +103,12 @@ jobs:
           
           # Create IPA (ZIP file)
           cd ../build/ios/ipa
-          zip -r ../ScreenCast.ipa Payload
+          zip -r ScreenCast.ipa Payload
           
-          echo "IPA created at: ../build/ios/ScreenCast.ipa"
-          ls -la ../build/ios/ScreenCast.ipa
+          echo "IPA created at: $(pwd)/ScreenCast.ipa"
+          ls -la ScreenCast.ipa
+          cd ../build/ios
+          ls -la ScreenCast.ipa
 
       - name: Upload IPA as artifact
         uses: actions/upload-artifact@v4
