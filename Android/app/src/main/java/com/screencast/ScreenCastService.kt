@@ -155,6 +155,7 @@ class ScreenCastService : Service() {
                 Thread.sleep(frameInterval.toLong())
             }
         } catch (e: Exception) {
+            // Client disconnected - normal
         } finally {
             try { client.close() } catch (e: Exception) {}
         }

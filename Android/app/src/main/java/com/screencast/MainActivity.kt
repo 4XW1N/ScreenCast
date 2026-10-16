@@ -1,5 +1,6 @@
 package com.screencast
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.net.wifi.WifiInfo
