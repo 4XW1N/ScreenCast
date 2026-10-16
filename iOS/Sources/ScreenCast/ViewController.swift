@@ -12,7 +12,7 @@ class ViewController: UIViewController {
     private var connectButton: UIButton!
     private var disconnectButton: UIButton!
     private var statusLabel: UILabel!
-    private var isConnected = false
+    private var settingsButton: UIButton!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -211,7 +211,7 @@ class ViewController: UIViewController {
         webView.loadHTMLString("""
         <html>
         <body style='background:#000000;color:#ffffff;text-align:center;padding-top:40%;font-family:sans-serif'>
-        <h1>⏹ Disconnected</h2>
+        <h1>⏹ Disconnected</h1>
         <p>Tap Connect to start casting</p>
         </body>
         </html>
@@ -231,4 +231,6 @@ class ViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
+
+    private var isConnected = false
 }
