@@ -44,6 +44,9 @@ class ScreenCastService : Service() {
     private val CHANNEL_ID = "screen_cast_channel"
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+        // Start foreground IMMEDIATELY to prevent crash
+        startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Starting..."))
+
         try {
             val resultCode = intent.getIntExtra("mediaProjectionResultCode", -1)
             val data = intent.getParcelableExtra<Intent>("mediaProjectionData")
@@ -58,9 +61,6 @@ class ScreenCastService : Service() {
             if (mediaProjection == null) {
                 return START_STICKY
             }
-
-            // Start foreground IMMEDIATELY to avoid crash
-            startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Starting..."))
 
             startCapture()
         } catch (e: Exception) {
