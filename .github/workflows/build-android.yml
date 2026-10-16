@@ -19,7 +19,6 @@ on:
 
 env:
   JAVA_VERSION: '17'
-  GRADLE_VERSION: '8.2'
 
 jobs:
   build-apk:
@@ -44,12 +43,16 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: ${{ env.GRADLE_VERSION }}
+          gradle-version: 8.2
 
       - name: Generate Gradle Wrapper
+        run: gradle wrapper --gradle-version 8.2
+
+      - name: Download WebRTC AAR
         run: |
-          # Use gradle from setup-gradle action to generate wrapper
-          gradle wrapper --gradle-version ${{ env.GRADLE_VERSION }}
+          mkdir -p app/libs
+          curl -L -o app/libs/webrtc.aar "https://storage.googleapis.com/webrtc-builds/android/webrtc-114.0.0.aar" || \
+          curl -L -o app/libs/webrtc.aar "https://github.com/stasel/WebRTC-Android-Prebuilts/raw/main/webrtc-114.0.0.aar"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -88,44 +91,3 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-aab:
-    name: Build AAB (for Play Store)
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.build_type == 'Release'
-    defaults:
-      run:
-        working-directory: ./Android
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-          cache: gradle
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: ${{ env.GRADLE_VERSION }}
-
-      - name: Generate Gradle Wrapper
-        run: gradle wrapper --gradle-version ${{ env.GRADLE_VERSION }}
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build Release Bundle
-        run: ./gradlew bundleRelease
-
-      - name: Upload AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: ScreenCast-Android-AAB
-          path: Android/app/build/outputs/bundle/release/*.aab
-          retention-days: 30

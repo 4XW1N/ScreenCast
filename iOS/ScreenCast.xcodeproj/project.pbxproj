@@ -27,6 +27,7 @@
 		0000000000000000000000C /* SignalingMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalingMessage.swift; sourceTree = SOURCE_ROOT; };
 		0000000000000000000000E /* WebRTCManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebRTCManager.swift; sourceTree = SOURCE_ROOT; };
 		00000000000000000000010 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = ScreenCast/Resources/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+		00000000000000000000012 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00000000000000000000013 /* ScreenCast-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ScreenCast-Bridging-Header.h"; sourceTree = SOURCE_ROOT; };
 		00000000000000000000014 /* Package.resolved */ = {isa = PBXFileReference; lastKnownFileType = text; path = Package.resolved; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -94,7 +95,7 @@
 				00000000000000000000012 /* Info.plist */,
 				00000000000000000000013 /* ScreenCast-Bridging-Header.h */,
 			);
-			path = Resources;
+			name = Resources;
 			sourceTree = "<group>";
 		};
 		00000000000000000000030 /* Products */ = {
