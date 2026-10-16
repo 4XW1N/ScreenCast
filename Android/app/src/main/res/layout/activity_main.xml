@@ -1,41 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="40dp"
-    android:gravity="center">
+    android:padding="24dp">
 
-    <TextView
-        android:id="@+id/ipText"
-        android:layout_width="wrap_content"
+    <!-- Header -->
+    <LinearLayout
+        android:id="@+id/header"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@color/purple_500"
-        android:layout_marginBottom="32dp"
-        android:gravity="center"/>
+        android:orientation="vertical"
+        android:gravity="center">
 
-    <TextView
-        android:id="@+id/statusText"
-        android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/appTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ScreenCast"
+            android:textSize="36sp"
+            android:textStyle="bold"
+            android:textColor="@color/purple_500"/>
+
+        <TextView
+            android:id="@+id/appSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cast your screen to iPad"
+            android:textSize="16sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+
+    <!-- Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardView"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:layout_marginBottom="32dp"/>
+        android:layout_below="@id/header"
+        android:layout_margin="16dp"
+        android:elevation="8dp"
+        app:cardCornerRadius="16dp"
+        app:cardBackgroundColor="@android:color/white">
 
-    <Switch
-        android:id="@+id/qualitySwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="High Quality"
-        android:textSize="14sp"
-        android:layout_marginBottom="32dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
 
+            <TextView
+                android:id="@+id/ipText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="http://192.168.1.1:8080/stream"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/purple_500"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="24dp"/>
+
+            <ImageView
+                android:id="@+id/statusIcon"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/checkbox_off_background"
+                android:layout_gravity="center_horizontal"/>
+
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⚪ Ready to Cast"
+                android:textSize="16sp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"/>
+
+            <Switch
+                android:id="@+id/qualitySwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="High Quality"
+                android:textSize="14sp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"/>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Button -->
     <Button
         android:id="@+id/startButton"
         android:layout_width="200dp"
         android:layout_height="56dp"
+        android:layout_below="@id/cardView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp"
         android:text="▶ Start Casting"
         android:textColor="@android:color/white"
-        android:backgroundTint="@color/purple_500"/>
-</LinearLayout>
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:backgroundTint="@color/purple_500"
+        android:elevation="4dp"/>
+</RelativeLayout>

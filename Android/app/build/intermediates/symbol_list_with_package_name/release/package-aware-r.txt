@@ -2078,7 +2078,6 @@ color primary_text_default_material_dark
 color primary_text_default_material_light
 color primary_text_disabled_material_dark
 color primary_text_disabled_material_light
-color purple_200
 color purple_500
 color purple_700
 color ripple_material_dark
@@ -3161,6 +3160,8 @@ id animateToEnd
 id animateToStart
 id antiClockwise
 id anticipate
+id appSubtitle
+id appTitle
 id arc
 id asConfigured
 id async
@@ -3183,6 +3184,7 @@ id buttonPanel
 id cache_measures
 id callMeasure
 id cancel_button
+id cardView
 id carryVelocity
 id center
 id centerCrop
@@ -3288,6 +3290,7 @@ id graph_wrap
 id group_divider
 id grouping
 id groups
+id header
 id header_title
 id hide_ime_id
 id hideable
@@ -3506,6 +3509,7 @@ id startToEnd
 id startVertical
 id staticLayout
 id staticPostLayout
+id statusIcon
 id statusText
 id stop
 id stretch

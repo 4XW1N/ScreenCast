@@ -1,6 +1,6 @@
 package com.screencast
 
-import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.net.wifi.WifiInfo
@@ -11,6 +11,7 @@ import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.card.MaterialCardView
 
 class MainActivity : AppCompatActivity() {
 
@@ -19,6 +20,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var ipText: TextView
     private lateinit var startButton: Button
     private lateinit var qualitySwitch: Switch
+    private lateinit var cardView: MaterialCardView
     private var isCasting = false
 
     private val REQUEST_CODE = 1001
@@ -33,6 +35,7 @@ class MainActivity : AppCompatActivity() {
         ipText = findViewById(R.id.ipText)
         startButton = findViewById(R.id.startButton)
         qualitySwitch = findViewById(R.id.qualitySwitch)
+        cardView = findViewById(R.id.cardView)
 
         updateIpDisplay()
 
@@ -43,13 +46,17 @@ class MainActivity : AppCompatActivity() {
                 stopCasting()
             }
         }
+
+        ipText.setOnClickListener {
+            Toast.makeText(this@MainActivity, "IP: $ipText.text", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun updateIpDisplay() {
         val wifiManager = getSystemService(WifiManager::class.java) as WifiManager
         val wifiInfo = wifiManager.connectionInfo
         val ip = intToIp(wifiInfo.ipAddress)
-        ipText.text = "📱 Cast URL: http://$ip:8080/stream on iPad"
+        ipText.text = "http://$ip:8080/stream"
     }
 
     private fun requestScreenCapture() {
@@ -61,37 +68,41 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
             data?.let { intent ->
-                val serviceIntent = Intent(this, ScreenCastService::class.java).apply {
+                val serviceIntent = Intent(this@MainActivity, ScreenCastService::class.java).apply {
                     putExtra("mediaProjectionResultCode", resultCode)
                     putExtra("mediaProjectionData", intent)
                     putExtra("quality", qualitySwitch.isChecked)
                 }
                 startForegroundService(serviceIntent)
                 isCasting = true
-                startButton.text = "⏹ Stop Casting"
-                startButton.setBackgroundColor(android.graphics.Color.RED)
-                statusText.text = "🔴 Casting live..."
-                statusText.setTextColor(android.graphics.Color.GREEN)
+                updateUIForCasting(true)
             }
         } else {
-            Toast.makeText(this, "Screen capture permission required", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@MainActivity, "Screen capture permission required", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun stopCasting() {
-        val intent = Intent(this, ScreenCastService::class.java)
+        val intent = Intent(this@MainActivity, ScreenCastService::class.java)
         stopService(intent)
         isCasting = false
-        startButton.text = "▶ Start Casting"
-        startButton.setBackgroundColor(android.graphics.Color.parseColor("#6200EE"))
-        statusText.text = "⚪ Ready to cast"
-        statusText.setTextColor(android.graphics.Color.GRAY)
+        updateUIForCasting(false)
     }
 
-    private fun getIpAddress(): String {
-        val wifiManager = getSystemService(WifiManager::class.java) as WifiManager
-        val ip = wifiManager.connectionInfo.ipAddress
-        return intToIp(ip)
+    private fun updateUIForCasting(casting: Boolean) {
+        if (casting) {
+            startButton.text = "⏹ Stop Casting"
+            startButton.setBackgroundColor(android.graphics.Color.RED)
+            statusText.text = "🔴 Casting Live"
+            statusText.setTextColor(android.graphics.Color.GREEN)
+            cardView.setCardBackgroundColor(android.graphics.Color.parseColor("#E8F5E9"))
+        } else {
+            startButton.text = "▶ Start Casting"
+            startButton.setBackgroundColor(android.graphics.Color.parseColor("#6200EE"))
+            statusText.text = "⚪ Ready to Cast"
+            statusText.setTextColor(android.graphics.Color.GRAY)
+            cardView.setCardBackgroundColor(android.graphics.Color.WHITE)
+        }
     }
 
     private fun intToIp(ipInt: Int): String {
@@ -101,7 +112,12 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         if (isCasting) {
-            stopService(Intent(this, ScreenCastService::class.java))
+            stopService(Intent(this@MainActivity, ScreenCastService::class.java))
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateIpDisplay()
     }
 }
