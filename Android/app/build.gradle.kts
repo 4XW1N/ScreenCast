@@ -33,15 +33,6 @@ android {
         jvmTarget = "17"
     }
 
-    signingConfigs {
-        create("debug") {
-            storeFile = file("keystore/debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-        }
-    }
-
     buildTypes {
         getByName("release") {
             signingConfig = signingConfigs.getByName("debug")
