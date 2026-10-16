@@ -59,6 +59,9 @@ class ScreenCastService : Service() {
                 return START_STICKY
             }
 
+            // Start foreground IMMEDIATELY to avoid crash
+            startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Starting..."))
+
             startCapture()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -101,8 +104,6 @@ class ScreenCastService : Service() {
                 startMjpegServer()
             }
             serverThread?.start()
-
-            startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Casting"))
         } catch (e: Exception) {
             e.printStackTrace()
             stopCapture()
