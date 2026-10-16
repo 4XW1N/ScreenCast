@@ -38,6 +38,7 @@ class ScreenCastService : Service() {
     private var isRunning = false
     private var handlerThread: HandlerThread? = null
     private var handler: android.os.Handler? = null
+    private var highQuality = false
 
     private val PORT = 8080
     private val NOTIFICATION_ID = 1
@@ -46,10 +47,10 @@ class ScreenCastService : Service() {
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         val resultCode = intent.getIntExtra("mediaProjectionResultCode", -1)
         val data = intent.getParcelableExtra<Intent>("mediaProjectionData")
+        highQuality = intent.getBooleanExtra("quality", false)
         if (resultCode != -1 && data != null && !isRunning) {
-            val mpm = getSystemService(MediaProjectionManager::class.java)
-            mediaProjectionManager = mpm
-            mediaProjection = mpm?.getMediaProjection(resultCode, data)
+            mediaProjectionManager = getSystemService(MediaProjectionManager::class.java)
+            mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, data)
             startCapture()
         }
         return START_STICKY
@@ -75,7 +76,6 @@ class ScreenCastService : Service() {
         handlerThread?.start()
         handler = android.os.Handler(handlerThread!!.looper)
 
-        // Use YUV_420_888 (API 21+) instead of RGBA_8888 (API 26+)
         imageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 2)
 
         virtualDisplay = mediaProjection!!.createVirtualDisplay(
@@ -133,15 +133,17 @@ class ScreenCastService : Service() {
         try {
             val out = java.io.DataOutputStream(client.outputStream)
 
-            // Send MJPEG header
             out.writeBytes("HTTP/1.1 200 OK\r\n")
             out.writeBytes("Connection: close\r\n")
             out.writeBytes("Content-Type: multipart/x-mixed-replace; boundary=--frameboundary\r\n")
             out.writeBytes("\r\n")
             out.flush()
 
+            val quality = if (highQuality) 85 else 70
+            val frameInterval = if (highQuality) 50 else 33
+
             while (isRunning && !client.isClosed) {
-                val frame = captureFrame()
+                val frame = captureFrame(quality)
                 if (frame != null) {
                     out.writeBytes("\r\n--frameboundary\r\n")
                     out.writeBytes("Content-Type: image/jpeg\r\n")
@@ -150,26 +152,24 @@ class ScreenCastService : Service() {
                     out.write(frame)
                     out.flush()
                 }
-                Thread.sleep(33) // ~30 FPS
+                Thread.sleep(frameInterval.toLong())
             }
         } catch (e: Exception) {
-            // Client disconnected - normal
         } finally {
             try { client.close() } catch (e: Exception) {}
         }
     }
 
-    private fun captureFrame(): ByteArray? {
+    private fun captureFrame(quality: Int): ByteArray? {
         return try {
             val image = imageReader?.acquireLatestImage() ?: return null
             val buffer = image.planes[0].buffer
-            val width = image.width
-            val height = image.height
+            val w = image.width
+            val h = image.height
 
-            // YUV_420_888 to JPEG
-            val yuvImage = android.graphics.YuvImage(buffer.array(), ImageFormat.NV21, width, height, null)
+            val yuvImage = android.graphics.YuvImage(buffer.array(), ImageFormat.NV21, w, h, null)
             val output = ByteArrayOutputStream()
-            yuvImage.compressToJpeg(Rect(0, 0, width, height), 70, output)
+            yuvImage.compressToJpeg(Rect(0, 0, w, h), quality, output)
             output.toByteArray()
         } catch (e: Exception) {
             e.printStackTrace()

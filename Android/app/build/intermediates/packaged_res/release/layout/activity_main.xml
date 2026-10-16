@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="32dp"
+    android:padding="40dp"
     android:gravity="center">
 
     <TextView
@@ -13,20 +13,29 @@
         android:textSize="18sp"
         android:textStyle="bold"
         android:textColor="@color/purple_500"
-        android:layout_marginBottom="24dp"/>
+        android:layout_marginBottom="32dp"
+        android:gravity="center"/>
 
     <TextView
         android:id="@+id/statusText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="16sp"
-        android:layout_marginBottom="24dp"/>
+        android:layout_marginBottom="32dp"/>
+
+    <Switch
+        android:id="@+id/qualitySwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="High Quality"
+        android:textSize="14sp"
+        android:layout_marginBottom="32dp"/>
 
     <Button
         android:id="@+id/startButton"
         android:layout_width="200dp"
         android:layout_height="56dp"
-        android:text="Start Casting"
+        android:text="▶ Start Casting"
         android:textColor="@android:color/white"
         android:backgroundTint="@color/purple_500"/>
 </LinearLayout>

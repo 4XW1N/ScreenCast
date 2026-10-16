@@ -8,6 +8,7 @@ color teal_200
 color teal_700
 color white
 id ipText
+id qualitySwitch
 id startButton
 id statusText
 layout activity_main

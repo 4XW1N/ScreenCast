@@ -3437,6 +3437,7 @@ id postLayout
 id pressed
 id progress_circular
 id progress_horizontal
+id qualitySwitch
 id radio
 id ratio
 id rectangles

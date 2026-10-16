@@ -6,6 +6,7 @@ import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.widget.Button
+import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -16,6 +17,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var ipText: TextView
     private lateinit var startButton: Button
+    private lateinit var qualitySwitch: Switch
     private var isCasting = false
 
     private val REQUEST_CODE = 1001
@@ -29,21 +31,29 @@ class MainActivity : AppCompatActivity() {
         statusText = findViewById(R.id.statusText)
         ipText = findViewById(R.id.ipText)
         startButton = findViewById(R.id.startButton)
+        qualitySwitch = findViewById(R.id.qualitySwitch)
 
-        // Show IP address
-        val wifiManager = getSystemService(WifiManager::class.java) as WifiManager
-        val wifiInfo = wifiManager.connectionInfo
-        val ip = intToIp(wifiInfo.ipAddress)
-        ipText.text = "Cast to: http://$ip:8080/stream on iPad"
+        updateIpDisplay()
 
         startButton.setOnClickListener {
             if (!isCasting) {
-                val intent = mediaProjectionManager.createScreenCaptureIntent()
-                startActivityForResult(intent, REQUEST_CODE)
+                requestScreenCapture()
             } else {
                 stopCasting()
             }
         }
+    }
+
+    private fun updateIpDisplay() {
+        val wifiManager = getSystemService(WifiManager::class.java) as WifiManager
+        val wifiInfo = wifiManager.connectionInfo
+        val ip = intToIp(wifiInfo.ipAddress)
+        ipText.text = "📱 Cast URL: http://$ip:8080/stream on iPad"
+    }
+
+    private fun requestScreenCapture() {
+        val intent = mediaProjectionManager.createScreenCaptureIntent()
+        startActivityForResult(intent, REQUEST_CODE)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -52,13 +62,14 @@ class MainActivity : AppCompatActivity() {
             data?.let { intent ->
                 val serviceIntent = Intent(this, ScreenCastService::class.java).apply {
                     putExtra("mediaProjectionResultCode", resultCode)
-                    putExtra("mediaProjectionData", data)
+                    putExtra("mediaProjectionData", intent)
+                    putExtra("quality", qualitySwitch.isChecked)
                 }
                 startForegroundService(serviceIntent)
                 isCasting = true
-                startButton.text = "Stop Casting"
-                startButton.isEnabled = true
-                statusText.text = "Casting... Open http://${getIpAddress()}:8080/stream on iPad"
+                startButton.text = "⏹ Stop Casting"
+                startButton.setBackgroundColor(android.graphics.Color.RED)
+                statusText.text = "🔴 Casting live..."
                 statusText.setTextColor(android.graphics.Color.GREEN)
             }
         } else {
@@ -70,10 +81,10 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, ScreenCastService::class.java)
         stopService(intent)
         isCasting = false
-        startButton.text = "Start Casting"
-        startButton.isEnabled = true
-        statusText.text = "Not casting"
-        statusText.setTextColor(android.graphics.Color.RED)
+        startButton.text = "▶ Start Casting"
+        startButton.setBackgroundColor(android.graphics.Color.parseColor("#6200EE"))
+        statusText.text = "⚪ Ready to cast"
+        statusText.setTextColor(android.graphics.Color.GRAY)
     }
 
     private fun getIpAddress(): String {
