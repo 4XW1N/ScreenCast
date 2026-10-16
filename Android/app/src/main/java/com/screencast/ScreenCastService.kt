@@ -22,6 +22,7 @@ import android.os.IBinder
 import android.util.DisplayMetrics
 import android.view.Surface
 import android.view.WindowManager
+import android.widget.Toast
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.net.ServerSocket
@@ -45,13 +46,26 @@ class ScreenCastService : Service() {
     private val CHANNEL_ID = "screen_cast_channel"
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        val resultCode = intent.getIntExtra("mediaProjectionResultCode", -1)
-        val data = intent.getParcelableExtra<Intent>("mediaProjectionData")
-        highQuality = intent.getBooleanExtra("quality", false)
-        if (resultCode != -1 && data != null && !isRunning) {
+        try {
+            val resultCode = intent.getIntExtra("mediaProjectionResultCode", -1)
+            val data = intent.getParcelableExtra<Intent>("mediaProjectionData")
+            highQuality = intent.getBooleanExtra("quality", false)
+
+            if (resultCode == -1 || data == null || isRunning) {
+                return START_STICKY
+            }
+
             mediaProjectionManager = getSystemService(MediaProjectionManager::class.java)
             mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, data)
+
+            if (mediaProjection == null) {
+                Toast.makeText(this, "Failed to start screen capture", Toast.LENGTH_SHORT).show()
+                return START_STICKY
+            }
+
             startCapture()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
         return START_STICKY
     }
@@ -64,34 +78,39 @@ class ScreenCastService : Service() {
     }
 
     private fun startCapture() {
-        val metrics = DisplayMetrics()
-        val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        windowManager.defaultDisplay.getRealMetrics(metrics)
+        try {
+            val metrics = DisplayMetrics()
+            val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            windowManager.defaultDisplay.getRealMetrics(metrics)
 
-        val width = metrics.widthPixels
-        val height = metrics.heightPixels
-        val dpi = metrics.densityDpi
+            val width = metrics.widthPixels
+            val height = metrics.heightPixels
+            val dpi = metrics.densityDpi
 
-        handlerThread = HandlerThread("ScreenCastHandler")
-        handlerThread?.start()
-        handler = android.os.Handler(handlerThread!!.looper)
+            handlerThread = HandlerThread("ScreenCastHandler")
+            handlerThread?.start()
+            handler = android.os.Handler(handlerThread!!.looper)
 
-        imageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 2)
+            imageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 2)
 
-        virtualDisplay = mediaProjection!!.createVirtualDisplay(
-            "ScreenCast",
-            width, height, dpi,
-            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-            imageReader!!.surface, null, null
-        )
+            virtualDisplay = mediaProjection!!.createVirtualDisplay(
+                "ScreenCast",
+                width, height, dpi,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                imageReader!!.surface, null, null
+            )
 
-        isRunning = true
-        serverThread = Thread {
-            startMjpegServer()
+            isRunning = true
+            serverThread = Thread {
+                startMjpegServer()
+            }
+            serverThread?.start()
+
+            startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Casting to iPad"))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            stopCapture()
         }
-        serverThread?.start()
-
-        startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Casting to iPad"))
     }
 
     private fun stopCapture() {
