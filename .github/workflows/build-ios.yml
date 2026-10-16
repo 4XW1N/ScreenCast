@@ -50,26 +50,27 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             clean build 2>&1
 
-      - name: Find and package IPA
+      - name: Package IPA from SPM executable
         working-directory: ./iOS
         run: |
-          # Find the built .app
-          APP_PATH=$(find build/DerivedData -name "*.app" -path "*Release-iphoneos*" | head -1)
-          if [ -z "$APP_PATH" ]; then
-            echo "ERROR: Built .app not found"
-            find build/DerivedData -name "*.app" -type d
+          # Find the built executable (SPM produces a binary, not .app)
+          BINARY_PATH=$(find build/DerivedData -name "ScreenCast" -type f -perm +111 | head -1)
+          if [ -z "$BINARY_PATH" ]; then
+            echo "ERROR: Built binary not found"
+            find build/DerivedData -name "ScreenCast" -type f
             exit 1
           fi
           
-          echo "Found app at: $APP_PATH"
+          echo "Found binary at: $BINARY_PATH"
+          file "$BINARY_PATH"
           
-          # Create IPA structure
-          mkdir -p ../build/ios/ipa/Payload
-          cp -R "$APP_PATH" ../build/ios/ipa/Payload/
+          # Create .app bundle
+          APP_DIR="../build/ios/ipa/Payload/ScreenCast.app"
+          mkdir -p "$APP_DIR"
+          cp "$BINARY_PATH" "$APP_DIR/ScreenCast"
           
-          # Create Info.plist if not present
-          if [ ! -f "../build/ios/ipa/Payload/$(basename "$APP_PATH")/Info.plist" ]; then
-            cat > "../build/ios/ipa/Payload/$(basename "$APP_PATH")/Info.plist" << 'PLIST'
+          # Create Info.plist
+          cat > "$APP_DIR/Info.plist" << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -98,8 +99,7 @@ jobs:
               </array>
           </dict>
           </plist>
-          PLIST
-          fi
+          EOF
           
           # Create IPA (ZIP file)
           cd ../build/ios/ipa
