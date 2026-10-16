@@ -102,7 +102,7 @@ class ScreenCastService : Service() {
             }
             serverThread?.start()
 
-            startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Casting to iPad"))
+            startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Casting"))
         } catch (e: Exception) {
             e.printStackTrace()
             stopCapture()

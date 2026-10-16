@@ -10,18 +10,20 @@
         android:id="@+id/ipText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="18sp"
+        android:text="http://192.168.1.1:8080/stream"
+        android:textSize="16sp"
         android:textStyle="bold"
         android:textColor="#FF6200EE"
-        android:layout_marginBottom="32dp"
+        android:layout_marginBottom="24dp"
         android:gravity="center"/>
 
     <TextView
         android:id="@+id/statusText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="⚪ Ready to Cast"
         android:textSize="16sp"
-        android:layout_marginBottom="24dp"/>
+        android:layout_marginBottom="32dp"/>
 
     <Button
         android:id="@+id/startButton"

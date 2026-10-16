@@ -1,5 +1,6 @@
 package com.screencast
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.net.wifi.WifiInfo
@@ -39,6 +40,10 @@ class MainActivity : AppCompatActivity() {
                 stopCasting()
             }
         }
+
+        ipText.setOnClickListener {
+            Toast.makeText(this@MainActivity, "IP: $ipText.text", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun updateIpDisplay() {
@@ -61,7 +66,7 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
             data?.let { intent ->
-                val serviceIntent = Intent(this, ScreenCastService::class.java).apply {
+                val serviceIntent = Intent(this@MainActivity, ScreenCastService::class.java).apply {
                     putExtra("mediaProjectionResultCode", resultCode)
                     putExtra("mediaProjectionData", intent)
                 }
@@ -71,7 +76,7 @@ class MainActivity : AppCompatActivity() {
                 statusText.text = "🔴 Casting Live"
             }
         } else {
-            Toast.makeText(this, "Screen capture permission required", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@MainActivity, "Permission denied", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -92,5 +97,10 @@ class MainActivity : AppCompatActivity() {
         if (isCasting) {
             stopService(Intent(this, ScreenCastService::class.java))
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateIpDisplay()
     }
 }
