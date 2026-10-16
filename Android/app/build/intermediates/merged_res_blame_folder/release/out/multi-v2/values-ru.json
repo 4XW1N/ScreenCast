@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.screencast.app-mergeReleaseResources-34:/values-ru/values-ru.xml",
+            "outputFile": "com.screencast.app-mergeReleaseResources-29:/values-ru/values-ru.xml",
             "map": [
                 {
                     "source": "/home/aswin/.gradle/caches/transforms-3/cbed64e75e489e8d84e9746d96547138/transformed/material-1.11.0/res/values-ru/values-ru.xml",

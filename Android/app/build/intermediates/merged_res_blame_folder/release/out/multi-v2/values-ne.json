@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.screencast.app-mergeReleaseResources-34:/values-ne/values-ne.xml",
+            "outputFile": "com.screencast.app-mergeReleaseResources-29:/values-ne/values-ne.xml",
             "map": [
                 {
                     "source": "/home/aswin/.gradle/caches/transforms-3/d9df576dcaca9e76e24725bc3e0fc475/transformed/core-1.12.0/res/values-ne/values-ne.xml",

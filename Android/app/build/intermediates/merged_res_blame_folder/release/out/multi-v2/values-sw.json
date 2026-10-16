@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.screencast.app-mergeReleaseResources-34:/values-sw/values-sw.xml",
+            "outputFile": "com.screencast.app-mergeReleaseResources-29:/values-sw/values-sw.xml",
             "map": [
                 {
                     "source": "/home/aswin/.gradle/caches/transforms-3/53ae9d152f73a2bf6e96f275d81b2377/transformed/appcompat-1.6.1/res/values-sw/values-sw.xml",

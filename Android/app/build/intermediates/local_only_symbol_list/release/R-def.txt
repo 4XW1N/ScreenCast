@@ -7,15 +7,9 @@ color purple_700
 color teal_200
 color teal_700
 color white
-id ipInput
-id ipLayout
-id portInput
-id portLayout
-id progressBar
+id ipText
+id startButton
 id statusText
-id subtitle
-id title
-id toggleButton
 layout activity_main
 mipmap ic_launcher
 mipmap ic_launcher_round

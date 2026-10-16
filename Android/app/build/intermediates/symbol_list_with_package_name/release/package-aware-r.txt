@@ -3307,8 +3307,7 @@ id indeterminate
 id info
 id invisible
 id inward
-id ipInput
-id ipLayout
+id ipText
 id italic
 id item_touch_helper_previous_elevation
 id jumpToEnd
@@ -3433,12 +3432,9 @@ id pathRelative
 id peekHeight
 id percent
 id pin
-id portInput
-id portLayout
 id position
 id postLayout
 id pressed
-id progressBar
 id progress_circular
 id progress_horizontal
 id radio
@@ -3503,6 +3499,7 @@ id src_in
 id src_over
 id standard
 id start
+id startButton
 id startHorizontal
 id startToEnd
 id startVertical
@@ -3513,7 +3510,6 @@ id stop
 id stretch
 id submenuarrow
 id submit_area
-id subtitle
 id supportScrollUp
 id tabMode
 id tag_accessibility_actions
@@ -3550,7 +3546,6 @@ id title
 id titleDividerNoCustom
 id title_template
 id toggle
-id toggleButton
 id top
 id topPanel
 id touch_outside
