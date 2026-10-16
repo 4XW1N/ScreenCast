@@ -19,7 +19,7 @@ let package = Package(
                 .product(name: "WebRTC", package: "WebRTC")
             ],
             path: "ScreenCast",
-            exclude: ["Info.plist"],
+            exclude: ["Info.plist", "Resources"],
             resources: [
                 .process("Resources")
             ]
