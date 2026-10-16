@@ -54,7 +54,7 @@ jobs:
         working-directory: ./iOS
         run: |
           # Find the built executable (SPM produces a binary, not .app)
-          BINARY_PATH=$(find build/DerivedData -name "ScreenCast" -type f -perm +111 | head -1)
+          BINARY_PATH=$(find build/DerivedData/Build/Products/Release-iphoneos -name "ScreenCast" -type f | head -1)
           if [ -z "$BINARY_PATH" ]; then
             echo "ERROR: Built binary not found"
             find build/DerivedData -name "ScreenCast" -type f
