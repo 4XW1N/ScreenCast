@@ -33,8 +33,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.activity:activity-ktx:1.8.2")
 
-    // WebRTC - using local AAR file
-    implementation(files("libs/webrtc.aar"))
+    // WebRTC - stub implementation included in source
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
