@@ -1,0 +1,6 @@
+[
+    {
+        "merged": "com.screencast.app-mergeReleaseResources-35:/layout/activity_main.xml",
+        "source": "com.screencast.app-main-37:/layout/activity_main.xml"
+    }
+]

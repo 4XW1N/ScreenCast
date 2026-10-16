@@ -7,22 +7,12 @@ let package = Package(
         .iOS(.v15)
     ],
     products: [
-        .library(name: "ScreenCast", targets: ["ScreenCast"])
-    ],
-    dependencies: [
-        .package(url: "https://github.com/stasel/WebRTC.git", from: "120.0.0")
+        .executable(name: "ScreenCast", targets: ["ScreenCast"])
     ],
     targets: [
-        .target(
+        .executableTarget(
             name: "ScreenCast",
-            dependencies: [
-                .product(name: "WebRTC", package: "WebRTC")
-            ],
-            path: "ScreenCast",
-            exclude: ["Info.plist", "Resources"],
-            resources: [
-                .process("Resources")
-            ]
+            path: "Sources/ScreenCast"
         )
     ]
 )

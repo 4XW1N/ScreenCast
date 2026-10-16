@@ -16,21 +16,9 @@ on:
         options:
           - Debug
           - Release
-      export_method:
-        description: 'Export method'
-        required: true
-        default: 'ad-hoc'
-        type: choice
-        options:
-          - app-store
-          - ad-hoc
-          - enterprise
-          - development
 
 env:
   XCODE_VERSION: '15.4'
-  SCHEME: 'ScreenCast'
-  BUNDLE_ID: 'com.screencast.receiver'
 
 jobs:
   build-ipa:
@@ -47,76 +35,72 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer
           xcodebuild -version
 
-      - name: Install xcbeautify
-        run: brew install xcbeautify || true
-
-      - name: Create ExportOptions.plist
+      - name: Build with Swift Package Manager
         working-directory: ./iOS
         run: |
-          cat > ExportOptions.plist << 'EOF'
+          swift build -c release --arch arm64 2>&1 || swift build -c release 2>&1
+
+      - name: Package IPA manually
+        working-directory: ./iOS
+        run: |
+          # Find the built binary
+          BINARY_PATH=$(find .build -name "ScreenCast" -type f | head -1)
+          if [ -z "$BINARY_PATH" ]; then
+            echo "ERROR: Built binary not found"
+            find .build -name "ScreenCast" -type f
+            exit 1
+          fi
+          
+          echo "Found binary at: $BINARY_PATH"
+          
+          # Create IPA structure
+          mkdir -p ../build/ios/ipa/Payload
+          cp -R "$BINARY_PATH" ../build/ios/ipa/Payload/ScreenCast
+          
+          # Create Info.plist
+          cat > ../build/ios/ipa/Payload/Info.plist << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
-              <key>method</key>
-              <string>${{ github.event.inputs.export_method || 'ad-hoc' }}</string>
-              <key>compileBitcode</key>
-              <false/>
-              <key>signingStyle</key>
-              <string>automatic</string>
-              <key>stripSwiftSymbols</key>
+              <key>CFBundleExecutable</key>
+              <string>ScreenCast</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.screencast.receiver</string>
+              <key>CFBundleName</key>
+              <string>ScreenCast</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>LSRequiresIPhoneOS</key>
               <true/>
-              <key>teamID</key>
-              <string>$(DEVELOPMENT_TEAM)</string>
-              <key>thinning</key>
-              <string><none></string>
+              <key>UILaunchScreen</key>
+              <dict/>
+              <key>UISupportedInterfaceOrientations</key>
+              <array>
+                  <string>UIInterfaceOrientationPortrait</string>
+                  <string>UIInterfaceOrientationLandscapeLeft</string>
+                  <string>UIInterfaceOrientationLandscapeRight</string>
+              </array>
           </dict>
           </plist>
           EOF
-
-      - name: Build and Archive
-        working-directory: ./iOS
-        env:
-          CONFIGURATION: ${{ github.event.inputs.configuration || 'Release' }}
-        run: |
-          xcodebuild clean archive \
-            -project ScreenCast.xcodeproj \
-            -scheme ${{ env.SCHEME }} \
-            -configuration ${{ env.CONFIGURATION }} \
-            -destination 'generic/platform=iOS' \
-            -archivePath ../build/ios/${{ env.SCHEME }}.xcarchive \
-            -derivedDataPath ../build/ios/DerivedData \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            2>&1 | xcbeautify
-
-      - name: Export IPA
-        working-directory: ./iOS
-        run: |
-          xcodebuild -exportArchive \
-            -archivePath ../build/ios/${{ env.SCHEME }}.xcarchive \
-            -exportPath ../build/ios/ipa \
-            -exportOptionsPlist ExportOptions.plist 2>&1 | xcbeautify || true
-
-      - name: Verify IPA
-        run: |
-          ls -la ./build/ios/ipa/
-          IPA_PATH=$(find ./build/ios/ipa -name "*.ipa" | head -1)
-          if [ -f "$IPA_PATH" ]; then
-            echo "IPA found: $IPA_PATH"
-            unzip -l "$IPA_PATH" | head -30
-          else
-            echo "ERROR: No IPA found!"
-            find ./build -name "*.ipa" -o -name "*.xcarchive" 2>/dev/null | head -20
-            exit 1
-          fi
+          
+          # Create IPA (ZIP file)
+          cd ../build/ios/ipa
+          zip -r ../ScreenCast.ipa Payload
+          
+          echo "IPA created at: ../build/ios/ScreenCast.ipa"
+          ls -la ../build/ios/ScreenCast.ipa
 
       - name: Upload IPA as artifact
         uses: actions/upload-artifact@v4
         with:
           name: ScreenCast-iOS-${{ github.event.inputs.configuration || 'Release' }}
-          path: ./build/ios/ipa/*.ipa
+          path: ./build/ios/*.ipa
           retention-days: 30
           compression-level: 6
 
@@ -124,7 +108,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: ./build/ios/ipa/*.ipa
+          files: ./build/ios/*.ipa
           generate_release_notes: true
           draft: false
           prerelease: false
