@@ -7,14 +7,8 @@ color teal_200
 color teal_700
 color white
 drawable bg_gradient
-id appSubtitle
-id appTitle
-id cardView
-id header
 id ipText
-id qualitySwitch
 id startButton
-id statusIcon
 id statusText
 layout activity_main
 mipmap ic_launcher

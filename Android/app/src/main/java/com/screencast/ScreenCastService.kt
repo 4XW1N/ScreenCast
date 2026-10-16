@@ -22,7 +22,6 @@ import android.os.IBinder
 import android.util.DisplayMetrics
 import android.view.Surface
 import android.view.WindowManager
-import android.widget.Toast
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.net.ServerSocket
@@ -39,7 +38,6 @@ class ScreenCastService : Service() {
     private var isRunning = false
     private var handlerThread: HandlerThread? = null
     private var handler: android.os.Handler? = null
-    private var highQuality = false
 
     private val PORT = 8080
     private val NOTIFICATION_ID = 1
@@ -49,7 +47,6 @@ class ScreenCastService : Service() {
         try {
             val resultCode = intent.getIntExtra("mediaProjectionResultCode", -1)
             val data = intent.getParcelableExtra<Intent>("mediaProjectionData")
-            highQuality = intent.getBooleanExtra("quality", false)
 
             if (resultCode == -1 || data == null || isRunning) {
                 return START_STICKY
@@ -59,7 +56,6 @@ class ScreenCastService : Service() {
             mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, data)
 
             if (mediaProjection == null) {
-                Toast.makeText(this, "Failed to start screen capture", Toast.LENGTH_SHORT).show()
                 return START_STICKY
             }
 
@@ -158,11 +154,8 @@ class ScreenCastService : Service() {
             out.writeBytes("\r\n")
             out.flush()
 
-            val quality = if (highQuality) 85 else 70
-            val frameInterval = if (highQuality) 50 else 33
-
             while (isRunning && !client.isClosed) {
-                val frame = captureFrame(quality)
+                val frame = captureFrame(70)
                 if (frame != null) {
                     out.writeBytes("\r\n--frameboundary\r\n")
                     out.writeBytes("Content-Type: image/jpeg\r\n")
@@ -171,10 +164,9 @@ class ScreenCastService : Service() {
                     out.write(frame)
                     out.flush()
                 }
-                Thread.sleep(frameInterval.toLong())
+                Thread.sleep(33)
             }
         } catch (e: Exception) {
-            // Client disconnected - normal
         } finally {
             try { client.close() } catch (e: Exception) {}
         }
