@@ -53,7 +53,6 @@ jobs:
       - name: Package IPA from SPM executable
         working-directory: ./iOS
         run: |
-          # Find the built executable (SPM produces a binary, not .app)
           BINARY_PATH=$(find build/DerivedData/Build/Products/Release-iphoneos -maxdepth 1 -name "ScreenCast" -type f | head -1)
           if [ -z "$BINARY_PATH" ]; then
             echo "ERROR: Built binary not found"
@@ -64,13 +63,11 @@ jobs:
           echo "Found binary at: $BINARY_PATH"
           file "$BINARY_PATH"
           
-          # Create .app bundle
           APP_DIR="../build/ios/ipa/Payload/ScreenCast.app"
           mkdir -p "$APP_DIR"
           cp "$BINARY_PATH" "$APP_DIR/ScreenCast"
           chmod +x "$APP_DIR/ScreenCast"
           
-          # Create Info.plist
           cat > "$APP_DIR/Info.plist" << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -102,7 +99,6 @@ jobs:
           </plist>
           EOF
           
-          # Create IPA (ZIP file)
           cd ../build/ios/ipa
           zip -r ScreenCast.ipa Payload
           
@@ -117,10 +113,30 @@ jobs:
           retention-days: 30
           compression-level: 6
 
-      - name: Create Release (on tag)
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Create GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: ScreenCast iOS v1.0.${{ github.run_number }}
+          body: |
+            ## ScreenCast iOS Receiver - Auto Build
+
+            ### Download
+            - **IPA**: Download the `ScreenCast.ipa` asset below
+
+            ### How to Install
+            1. Install [AltStore](https://altstore.io) or [Sideloadly](https://sideloadly.io) on your Mac/PC
+            2. Connect your iPad via USB
+            3. Sideload `ScreenCast.ipa` to your iPad
+            4. Open the app and enter your Android phone's IP address
+            5. Tap Connect
+
+            ### How to Use
+            1. Start casting on Android phone
+            2. On iPad, enter Android IP (e.g., `192.168.1.50`)
+            3. Tap Connect - Android screen appears on iPad!
+
           files: ./build/ios/ipa/*.ipa
           generate_release_notes: true
           draft: false

@@ -51,37 +51,49 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Debug APK
-        if: github.event.inputs.build_type == 'Debug' || github.event_name != 'workflow_dispatch'
-        run: ./gradlew assembleDebug
-
       - name: Build Release APK
-        if: github.event.inputs.build_type == 'Release'
         run: ./gradlew assembleRelease
 
-      - name: Upload Debug APK
-        if: github.event.inputs.build_type == 'Debug' || github.event_name != 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ScreenCast-Android-Debug
-          path: Android/app/build/outputs/apk/debug/*.apk
-          retention-days: 30
+      - name: Sign APK
+        run: |
+          /home/aswin/jdk-17.0.2/bin/keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" 2>/dev/null || true
+          /home/aswin/Android/Sdk/build-tools/34.0.0/apksigner sign --ks debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android app/build/outputs/apk/release/app-release-unsigned.apk
 
-      - name: Upload Release APK
-        if: github.event.inputs.build_type == 'Release'
+      - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
           name: ScreenCast-Android-Release
-          path: Android/app/build/outputs/apk/release/*.apk
+          path: Android/app/build/outputs/apk/release/app-release-unsigned.apk
           retention-days: 30
 
-      - name: Create Release (on tag)
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Create GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            Android/app/build/outputs/apk/release/*.apk
-            Android/app/build/outputs/apk/debug/*.apk
+          tag_name: v1.0.${{ github.run_number }}
+          name: ScreenCast Android v1.0.${{ github.run_number }}
+          body: |
+            ## ScreenCast Android Sender - Auto Build
+
+            ### Download
+            - **APK**: Download the `app-release-unsigned.apk` asset below
+
+            ### How to Install
+            1. Download `app-release-unsigned.apk` to your Android phone
+            2. Enable "Install unknown apps" in Settings if prompted
+            3. Open the APK to install
+            4. Open ScreenCast app
+
+            ### How to Use
+            1. Tap **"Start Casting"** on Android
+            2. Grant screen capture permission
+            3. Note the IP address shown (e.g., `192.168.1.50`)
+            4. On iPad, enter this IP in the ScreenCast receiver app
+            5. Tap Connect
+
+          files: Android/app/build/outputs/apk/release/app-release-unsigned.apk
           generate_release_notes: true
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
