@@ -17,6 +17,9 @@ on:
           - Debug
           - Release
 
+permissions:
+  contents: write
+
 env:
   XCODE_VERSION: '15.4'
 

@@ -2,7 +2,7 @@ name: Build Android App
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, master]
     tags: ['v*']
   pull_request:
     branches: [main]
@@ -16,6 +16,9 @@ on:
         options:
           - Debug
           - Release
+
+permissions:
+  contents: write
 
 env:
   JAVA_VERSION: '17'
