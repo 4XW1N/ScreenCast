@@ -101,6 +101,12 @@ class ScreenCastService : Service() {
             val dpi = metrics.densityDpi
             Log.i(TAG, "startCapture ${width}x$height dpi=$dpi")
 
+            // Downscale for performance: cap the longest side at 1280px
+            val scale = if (maxOf(width, height) > 1280) 1280.0 / maxOf(width, height) else 1.0
+            val captureWidth = ((width * scale).toInt() / 2) * 2
+            val captureHeight = ((height * scale).toInt() / 2) * 2
+            Log.i(TAG, "capture resolution ${captureWidth}x$captureHeight")
+
             handlerThread = HandlerThread("ScreenCastHandler")
             handlerThread?.start()
             handler = android.os.Handler(handlerThread!!.looper)
@@ -113,12 +119,12 @@ class ScreenCastService : Service() {
                 }
             }, handler)
 
-            imageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
+            imageReader = ImageReader.newInstance(captureWidth, captureHeight, PixelFormat.RGBA_8888, 2)
             Log.i(TAG, "imageReader created (RGBA_8888)")
 
             virtualDisplay = mediaProjection!!.createVirtualDisplay(
                 "ScreenCast",
-                width, height, dpi,
+                captureWidth, captureHeight, dpi,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 imageReader!!.surface, null, null
             )
@@ -184,7 +190,7 @@ class ScreenCastService : Service() {
             out.flush()
 
             while (isRunning && !client.isClosed) {
-                val frame = captureFrame(70)
+                val frame = captureFrame(60)
                 if (frame != null) {
                     out.writeBytes("\r\n--frameboundary\r\n")
                     out.writeBytes("Content-Type: image/jpeg\r\n")
