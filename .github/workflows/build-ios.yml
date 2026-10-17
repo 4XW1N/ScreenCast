@@ -53,22 +53,6 @@ jobs:
           path: ./iOS/build/ScreenCast.ipa
           retention-days: 30
 
-      - name: Create GitHub Release (skipped)
+      - name: Skip release creation
         if: false
-        run: echo "Release creation disabled - use existing release v1.0.2"
-
-
-            ### How to Install
-            1. Download the `ScreenCast.ipa` asset
-            2. Sideload using AltStore or Sideloadly
-            3. Open the app on your iPad
-
-            ### How to Use
-            1. Start casting on Android phone
-            2. On iPad, enter Android phone's IP address
-            3. Tap Connect
-          files: ./iOS/build/ScreenCast.ipa
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "Release creation disabled"
