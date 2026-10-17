@@ -12,6 +12,10 @@ class ViewController: UIViewController {
     private var disconnectButton: UIButton!
     private var statusLabel: UILabel!
     private var controlsContainer: UIView!
+    private var overlayLabel: UILabel!
+    private var overlayFrameCount = 0
+    private var overlayLastUpdate = Date()
+    private var watchdogTimer: Timer?
 
     private var session: URLSession?
     private var dataTask: URLSessionDataTask?
@@ -157,6 +161,25 @@ class ViewController: UIViewController {
         imageView.addGestureRecognizer(tapGesture)
         view.addSubview(imageView)
 
+        // Live indicator overlay (visible in fullscreen so the user knows frames are arriving)
+        overlayLabel = UILabel()
+        overlayLabel.text = "Connecting…"
+        overlayLabel.textColor = .white
+        overlayLabel.font = .systemFont(ofSize: 16, weight: .semibold)
+        overlayLabel.textAlignment = .center
+        overlayLabel.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+        overlayLabel.layer.cornerRadius = 10
+        overlayLabel.clipsToBounds = true
+        overlayLabel.translatesAutoresizingMaskIntoConstraints = false
+        overlayLabel.isHidden = true
+        view.addSubview(overlayLabel)
+        NSLayoutConstraint.activate([
+            overlayLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            overlayLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            overlayLabel.heightAnchor.constraint(equalToConstant: 36),
+            overlayLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 170),
+        ])
+
         // Controls container constraints
         NSLayoutConstraint.activate([
             controlsContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
@@ -198,6 +221,7 @@ class ViewController: UIViewController {
             // Hide controls, show video fullscreen
             controlsContainer.isHidden = true
             imageView.isHidden = false
+            overlayLabel.isHidden = false
             imageTopToControlsConstraint.isActive = false
             imageHeightConstraint.isActive = false
             imageLeadingConstraint.constant = 0
@@ -210,6 +234,7 @@ class ViewController: UIViewController {
             // Show controls, video in box (if we have video)
             controlsContainer.isHidden = false
             imageView.isHidden = !hasVideo
+            overlayLabel.isHidden = true
             imageTopToSafeAreaConstraint.isActive = false
             imageBottomToViewConstraint.isActive = false
             imageHeightConstraint.isActive = true
@@ -254,7 +279,17 @@ class ViewController: UIViewController {
         saveSettings()
         isConnected = true
         hasVideo = false
-        connectButton.isHidden = true
+        overlayFrameCount = 0
+        overlayLastUpdate = Date()
+        overlayLabel.text = "Connecting…"
+        watchdogTimer?.invalidate()
+        watchdogTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
+            DispatchQueue.main.async {
+                if let self = self, self.isConnected && !self.hasVideo {
+                    self.overlayLabel.text = "No video after 5s — check local network permission in Settings > Privacy > Local Network"
+                }
+            }
+        }
         disconnectButton.isHidden = false
         statusLabel.text = "Connecting to \(ip):\(port)..."
         statusLabel.textColor = .systemBlue
@@ -277,6 +312,11 @@ class ViewController: UIViewController {
     @objc private func disconnectTapped() {
         isConnected = false
         hasVideo = false
+        overlayFrameCount = 0
+        overlayLastUpdate = Date()
+        watchdogTimer?.invalidate()
+        watchdogTimer = nil
+        overlayLabel.isHidden = true
         connectButton.isHidden = false
         disconnectButton.isHidden = true
         dataTask?.cancel()
@@ -300,6 +340,11 @@ class ViewController: UIViewController {
 
 // MARK: - URLSessionDataDelegate for MJPEG
 extension ViewController: URLSessionDataDelegate {
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        // Allow the long-lived multipart response to stream continuously
+        completionHandler(.allow)
+    }
+
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         buffer.append(data)
 
@@ -323,6 +368,17 @@ extension ViewController: URLSessionDataDelegate {
                         self.statusLabel.text = "Connected - Streaming"
                         self.statusLabel.textColor = .systemGreen
                     }
+
+                    // Live FPS indicator
+                    self.overlayFrameCount += 1
+                    let now = Date()
+                    let elapsed = now.timeIntervalSince(self.overlayLastUpdate)
+                    if elapsed >= 1.0 {
+                        let fps = Double(self.overlayFrameCount) / elapsed
+                        self.overlayFrameCount = 0
+                        self.overlayLastUpdate = now
+                        self.overlayLabel.text = String(format: "ScreenCast   %.0f fps", fps)
+                    }
                 }
             }
         }
@@ -334,9 +390,12 @@ extension ViewController: URLSessionDataDelegate {
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         DispatchQueue.main.async {
+            self.watchdogTimer?.invalidate()
+            self.watchdogTimer = nil
             if let error = error {
                 self.statusLabel.text = "Error: \(error.localizedDescription)"
                 self.statusLabel.textColor = .systemRed
+                self.overlayLabel.isHidden = true
             }
         }
     }

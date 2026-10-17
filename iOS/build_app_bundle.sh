@@ -68,6 +68,17 @@ cat > "$APP_DIR/Info.plist" << 'PLISTEOF'
     <string>5</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>ScreenCast connects to your Android phone on the local network to receive the screen stream.</string>
+    <key>NSBonjourServices</key>
+    <array/>
     <key>UILaunchScreen</key>
     <dict/>
     <key>UISupportedInterfaceOrientations</key>
