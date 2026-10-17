@@ -35,24 +35,8 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer
           xcodebuild -version
 
-      - name: Install XcodeGen (version compatible with Xcode 15)
-        run: |
-          brew install xcodegen || true
-          XCG_VERSION=$(xcodegen --version 2>/dev/null | head -1)
-          echo "Current xcodegen: $XCG_VERSION"
-          if ! echo "$XCG_VERSION" | grep -qE "^2\.[0-3]"; then
-            brew uninstall --force xcodegen 2>/dev/null || true
-            # Download specific 2.x release via gh (authenticated, reliable)
-            gh release download 2.34.0 --repo yonaskolb/XcodeGen \
-              -p "xcodegen_2.34.0_macos_x86_64.tar.gz" --dir /tmp/ --clobber 2>/dev/null || \
-              curl -fsSL -A "Mozilla/5.0" \
-                https://github.com/yonaskolb/XcodeGen/releases/download/2.34.0/xcodegen_2.34.0_macos_x86_64.tar.gz \
-                -o /tmp/xcodegen.tar.gz
-            tar -xzf /tmp/xcodegen.tar.gz -C /tmp/
-            sudo cp /tmp/xcodegen_2.34.0_macos_x86_64/bin/xcodegen /usr/local/bin/xcodegen
-            chmod +x /usr/local/bin/xcodegen
-          fi
-          xcodegen --version
+      - name: Install XcodeGen
+        run: brew install xcodegen || xcodegen --version
 
       - name: Generate Xcode project with XcodeGen
         working-directory: ./iOS

@@ -1,7 +1,7 @@
 name: ScreenCast
 options:
   bundleIdPrefix: com.screencast
-  xcodeVersion: "15.0"
+  xcodeVersion: "15.4"
   deploymentTarget:
     iOS: "15.0"
 settings:
