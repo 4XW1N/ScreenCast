@@ -35,83 +35,49 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer
           xcodebuild -version
 
-      - name: Build with xcodebuild for iOS SDK
+      - name: Build Universal App (iPhone + iPad)
         working-directory: ./iOS
         run: |
           xcodebuild \
             -scheme ScreenCast \
             -configuration ${{ github.event.inputs.configuration || 'Release' }} \
-            -sdk iphoneos \
             -destination 'generic/platform=iOS' \
+            -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build/DerivedData \
-            -clonedSourcePackagesDirPath build/Packages \
+            TARGETED_DEVICE_FAMILY=1,2 \
+            ONLY_ACTIVE_ARCH=NO \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             clean build 2>&1
 
-      - name: Package IPA from SPM executable
+      - name: Package IPA
         working-directory: ./iOS
         run: |
-          BINARY_PATH=$(find build/DerivedData/Build/Products/Release-iphoneos -maxdepth 1 -name "ScreenCast" -type f | head -1)
-          if [ -z "$BINARY_PATH" ]; then
-            echo "ERROR: Built binary not found"
-            find build/DerivedData -name "ScreenCast" -type f
+          APP_PATH=$(find build/DerivedData -name "*.app" -path "*Release-iphoneos*" | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: Built .app not found"
+            find build/DerivedData -name "*.app" -type d
             exit 1
           fi
           
-          echo "Found binary at: $BINARY_PATH"
-          file "$BINARY_PATH"
+          echo "Found app at: $APP_PATH"
           
-          APP_DIR="../build/ios/ipa/Payload/ScreenCast.app"
-          mkdir -p "$APP_DIR"
-          cp "$BINARY_PATH" "$APP_DIR/ScreenCast"
-          chmod +x "$APP_DIR/ScreenCast"
+          mkdir -p build/ipa/Payload
+          cp -R "$APP_PATH" build/ipa/Payload/
           
-          cat > "$APP_DIR/Info.plist" << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CFBundleExecutable</key>
-              <string>ScreenCast</string>
-              <key>CFBundleIdentifier</key>
-              <string>com.screencast.receiver</string>
-              <key>CFBundleName</key>
-              <string>ScreenCast</string>
-              <key>CFBundleVersion</key>
-              <string>1</string>
-              <key>CFBundleShortVersionString</key>
-              <string>1.0</string>
-              <key>CFBundlePackageType</key>
-              <string>APPL</string>
-              <key>LSRequiresIPhoneOS</key>
-              <true/>
-              <key>UILaunchScreen</key>
-              <dict/>
-              <key>UISupportedInterfaceOrientations</key>
-              <array>
-                  <string>UIInterfaceOrientationPortrait</string>
-                  <string>UIInterfaceOrientationLandscapeLeft</string>
-                  <string>UIInterfaceOrientationLandscapeRight</string>
-              </array>
-          </dict>
-          </plist>
-          EOF
-          
-          cd ../build/ios/ipa
-          zip -r ScreenCast.ipa Payload
+          cd build/ipa
+          zip -r ../ScreenCast.ipa Payload
           
           echo "IPA created at: $(pwd)/ScreenCast.ipa"
-          ls -la ScreenCast.ipa
+          ls -la ../ScreenCast.ipa
 
       - name: Upload IPA as artifact
         uses: actions/upload-artifact@v4
         with:
           name: ScreenCast-iOS-${{ github.event.inputs.configuration || 'Release' }}
-          path: ./build/ios/ipa/*.ipa
+          path: ./iOS/build/ScreenCast.ipa
           retention-days: 30
-          compression-level: 6
 
       - name: Create GitHub Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -126,18 +92,17 @@ jobs:
             - **IPA**: Download the `ScreenCast.ipa` asset below
 
             ### How to Install
-            1. Install [AltStore](https://altstore.io) or [Sideloadly](https://sideloadly.io) on your Mac/PC
-            2. Connect your iPad via USB
-            3. Sideload `ScreenCast.ipa` to your iPad
-            4. Open the app and enter your Android phone's IP address
-            5. Tap Connect
+            1. Download `ScreenCast.ipa` from the release
+            2. Install via AltStore/Sideloadly
+            3. Open the app and enter your Android phone's IP address
+            4. Tap Connect
 
             ### How to Use
             1. Start casting on Android phone
             2. On iPad, enter Android IP (e.g., `192.168.1.50`)
             3. Tap Connect - Android screen appears on iPad!
 
-          files: ./build/ios/ipa/*.ipa
+          files: ./iOS/build/ScreenCast.ipa
           generate_release_notes: true
           draft: false
           prerelease: false

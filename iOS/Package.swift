@@ -12,7 +12,14 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "ScreenCast",
-            path: "Sources/ScreenCast"
+            path: "Sources/ScreenCast",
+            exclude: ["Info.plist"],
+            resources: [
+                .process("Resources")
+            ],
+            swiftSettings: [
+                .unsafeFlags(["-parse-as-library"])
+            ]
         )
     ]
 )
