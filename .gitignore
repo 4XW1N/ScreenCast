@@ -1,1 +1,7 @@
 phone-install/
+build*/
+ios-build/
+stable-build/
+android-build*/
+*.apk
+*.ipa
