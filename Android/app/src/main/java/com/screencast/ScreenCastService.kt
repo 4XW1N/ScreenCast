@@ -44,8 +44,13 @@ class ScreenCastService : Service() {
     private val CHANNEL_ID = "screen_cast_channel"
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        // Start foreground IMMEDIATELY to prevent crash
-        startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Starting..."))
+        // Start foreground - notifications required on Android 8+
+        try {
+            startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Starting..."))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Notifications blocked - server may still work briefly but Android may kill service
+        }
 
         try {
             val resultCode = intent.getIntExtra("mediaProjectionResultCode", -1)

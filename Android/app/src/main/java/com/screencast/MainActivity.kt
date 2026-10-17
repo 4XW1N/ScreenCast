@@ -1,10 +1,13 @@
 package com.screencast
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -39,12 +42,36 @@ class MainActivity : AppCompatActivity() {
 
         startButton.setOnClickListener {
             if (!isCasting) {
-                val intent = mediaProjectionManager.createScreenCaptureIntent()
-                startActivityForResult(intent, REQUEST_CODE)
+                // Check if notifications are enabled (required for foreground service on Android 8+)
+                val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M && !nm.isNotificationPolicyAccessGranted) {
+                    // Notifications may be blocked - warn user
+                    AlertDialog.Builder(this)
+                        .setTitle("Notifications Required")
+                        .setMessage("ScreenCast needs notifications enabled to run the streaming service. Please enable notifications for this app in Settings, then try again.")
+                        .setPositiveButton("Open Settings") { _, _ ->
+                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                            }
+                            startActivity(intent)
+                        }
+                        .setNegativeButton("Try Anyway") { _, _ ->
+                            startCastingFlow()
+                        }
+                        .setCancelable(false)
+                        .show()
+                } else {
+                    startCastingFlow()
+                }
             } else {
                 stopCasting()
             }
         }
+    }
+
+    private fun startCastingFlow() {
+        val intent = mediaProjectionManager.createScreenCaptureIntent()
+        startActivityForResult(intent, REQUEST_CODE)
     }
 
     private fun displayIpAddress() {
