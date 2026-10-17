@@ -29,7 +29,7 @@
         android:id="@+id/ipLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Your IP Address & Port:"
+        android:text="Your IP Address &amp; Port:"
         android:textSize="16sp"
         android:textColor="#333333"
         android:layout_marginTop="40dp"/>
