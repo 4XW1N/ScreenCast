@@ -16,6 +16,7 @@ class ViewController: UIViewController, URLSessionDataDelegate {
     private var isConnected = false
     private var buffer = Data()
     private var portTextField: UITextField!
+    private var disconnectButton: UIButton!
 
     override func viewDidLoad() {
         super.viewDidLoad()
