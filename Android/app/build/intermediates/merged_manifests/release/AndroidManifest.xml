@@ -32,7 +32,7 @@
             android:name="com.screencast.MainActivity"
             android:exported="true"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.ScreenCast.NoActionBar" >
+            android:theme="@style/Theme.ScreenCast" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

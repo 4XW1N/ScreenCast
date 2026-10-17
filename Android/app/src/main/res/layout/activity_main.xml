@@ -4,7 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:background="#FFFFFF">
 
     <TextView
         android:id="@+id/statusText"
@@ -19,6 +20,6 @@
         android:layout_width="200dp"
         android:layout_height="56dp"
         android:text="Start Casting"
-        android:textColor="@android:color/white"
+        android:textColor="#FFFFFF"
         android:backgroundTint="#FF6200EE"/>
 </LinearLayout>

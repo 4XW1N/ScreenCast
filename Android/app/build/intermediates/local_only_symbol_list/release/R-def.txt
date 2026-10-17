@@ -6,7 +6,6 @@ color purple_700
 color teal_200
 color teal_700
 color white
-drawable bg_gradient
 id startButton
 id statusText
 layout activity_main
@@ -26,6 +25,5 @@ string status_requesting
 string status_streaming
 string stop_casting
 style Theme.ScreenCast
-style Theme.ScreenCast.NoActionBar
 xml backup_rules
 xml data_extraction_rules

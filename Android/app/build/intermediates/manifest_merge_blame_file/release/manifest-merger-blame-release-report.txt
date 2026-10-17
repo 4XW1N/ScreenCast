@@ -57,8 +57,8 @@
 33-->/home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:20:13-36
 34            android:screenOrientation="portrait"
 34-->/home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:21:13-49
-35            android:theme="@style/Theme.ScreenCast.NoActionBar" >
-35-->/home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:22:13-64
+35            android:theme="@style/Theme.ScreenCast" >
+35-->/home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:22:13-52
 36            <intent-filter>
 36-->/home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:23:13-26:29
 37                <action android:name="android.intent.action.MAIN" />
