@@ -190,7 +190,9 @@ class ScreenCastService : Service() {
             out.flush()
 
             while (isRunning && !client.isClosed) {
-                val frame = captureFrame(60)
+                // Try for a fresh frame; otherwise resend the most recent one so
+                // the stream keeps a steady rate even when the screen is static.
+                val frame = captureFrame(60) ?: lastFrame
                 if (frame != null) {
                     out.writeBytes("\r\n--frameboundary\r\n")
                     out.writeBytes("Content-Type: image/jpeg\r\n")
@@ -208,6 +210,7 @@ class ScreenCastService : Service() {
     }
 
     private var frameCount = 0
+    @Volatile private var lastFrame: ByteArray? = null
 
     private fun captureFrame(quality: Int): ByteArray? {
         return try {
@@ -240,6 +243,7 @@ class ScreenCastService : Service() {
             padded.recycle()
 
             val bytes = output.toByteArray()
+            lastFrame = bytes
             frameCount++
             if (frameCount <= 3) Log.i(TAG, "frame #$frameCount ${width}x$height jpeg=${bytes.size} bytes")
             bytes
