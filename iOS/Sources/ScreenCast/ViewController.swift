@@ -11,11 +11,16 @@ class ViewController: UIViewController {
     private var connectButton: UIButton!
     private var disconnectButton: UIButton!
     private var statusLabel: UILabel!
+    private var controlsContainer: UIView!
 
     private var session: URLSession?
     private var dataTask: URLSessionDataTask?
     private var isConnected = false
     private var buffer = Data()
+
+    // Constraint references for toggling fullscreen
+    private var imageHeightConstraint: NSLayoutConstraint!
+    private var controlsContainerHeightConstraint: NSLayoutConstraint!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,26 +30,35 @@ class ViewController: UIViewController {
     }
 
     private func setupUI() {
-        // Use a single container stack view for everything
+        // Controls container (everything except video)
+        controlsContainer = UIView()
+        controlsContainer.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(controlsContainer)
+
+        // Container stack
         let container = UIStackView()
         container.axis = .vertical
         container.alignment = .fill
         container.spacing = 24
         container.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(container)
+        controlsContainer.addSubview(container)
 
         // Header
         let titleLabel = UILabel()
         titleLabel.text = "ScreenCast Receiver"
         titleLabel.font = .systemFont(ofSize: 40, weight: .bold)
         titleLabel.textAlignment = .center
-        titleLabel.textColor = UIColor(red: 0.25, green: 0.13, blue: 0.93, alpha: 1.0)
+        titleLabel.textColor = UIColor(red: 0.20, green: 0.10, blue: 0.80, alpha: 1.0)
+        titleLabel.numberOfLines = 1
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.minimumScaleFactor = 0.5
 
         let subtitleLabel = UILabel()
         subtitleLabel.text = "Receive Android screen on iPad"
         subtitleLabel.font = .systemFont(ofSize: 20)
         subtitleLabel.textAlignment = .center
-        subtitleLabel.textColor = .secondaryLabel
+        subtitleLabel.textColor = .darkGray
+        subtitleLabel.numberOfLines = 1
 
         let headerStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
         headerStack.axis = .vertical
@@ -59,12 +73,13 @@ class ViewController: UIViewController {
         inputRow.distribution = .fill
 
         ipTextField = UITextField()
-        ipTextField.placeholder = "Android IP Address (e.g. 192.168.1.50)"
+        ipTextField.placeholder = "Android IP Address"
         ipTextField.borderStyle = .roundedRect
         ipTextField.autocapitalizationType = .none
         ipTextField.keyboardType = .numbersAndPunctuation
         ipTextField.backgroundColor = .white
         ipTextField.font = .systemFont(ofSize: 20)
+        ipTextField.textColor = .black
         ipTextField.heightAnchor.constraint(equalToConstant: 56).isActive = true
 
         portTextField = UITextField()
@@ -74,6 +89,7 @@ class ViewController: UIViewController {
         portTextField.text = "8080"
         portTextField.backgroundColor = .white
         portTextField.font = .systemFont(ofSize: 20)
+        portTextField.textColor = .black
         portTextField.heightAnchor.constraint(equalToConstant: 56).isActive = true
         portTextField.widthAnchor.constraint(equalToConstant: 140).isActive = true
 
@@ -109,7 +125,20 @@ class ViewController: UIViewController {
         buttonRow.addArrangedSubview(connectButton)
         buttonRow.addArrangedSubview(disconnectButton)
 
-        // Image view for MJPEG stream
+        // Status label
+        statusLabel = UILabel()
+        statusLabel.text = "Enter Android IP and tap Connect"
+        statusLabel.textAlignment = .center
+        statusLabel.textColor = .darkGray
+        statusLabel.font = .systemFont(ofSize: 18)
+        statusLabel.numberOfLines = 0
+
+        container.addArrangedSubview(headerStack)
+        container.addArrangedSubview(inputRow)
+        container.addArrangedSubview(buttonRow)
+        container.addArrangedSubview(statusLabel)
+
+        // Image view for MJPEG stream — hidden until connected
         imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         imageView.backgroundColor = .black
@@ -117,35 +146,71 @@ class ViewController: UIViewController {
         imageView.layer.borderWidth = 2
         imageView.layer.borderColor = UIColor.systemGray4.cgColor
         imageView.clipsToBounds = true
+        imageView.isHidden = true
+        view.addSubview(imageView)
 
-        // Status label
-        statusLabel = UILabel()
-        statusLabel.text = "Enter Android IP and tap Connect"
-        statusLabel.textAlignment = .center
-        statusLabel.textColor = .secondaryLabel
-        statusLabel.font = .systemFont(ofSize: 18)
-        statusLabel.numberOfLines = 0
-
-        // Add all to container
-        container.addArrangedSubview(headerStack)
-        container.addArrangedSubview(inputRow)
-        container.addArrangedSubview(buttonRow)
-        container.addArrangedSubview(imageView)
-        container.addArrangedSubview(statusLabel)
-
-        // Constraints - pin container to safe area with padding
+        // Controls container constraints
         NSLayoutConstraint.activate([
-            container.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
-            container.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 60),
-            container.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -60),
-            container.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
+            controlsContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
+            controlsContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 60),
+            controlsContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -60),
+            controlsContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
+        ])
 
-            imageView.heightAnchor.constraint(greaterThanOrEqualToConstant: 300),
+        // Container constraints
+        NSLayoutConstraint.activate([
+            container.topAnchor.constraint(equalTo: controlsContainer.topAnchor),
+            container.leadingAnchor.constraint(equalTo: controlsContainer.leadingAnchor),
+            container.trailingAnchor.constraint(equalTo: controlsContainer.trailingAnchor),
+            container.bottomAnchor.constraint(equalTo: controlsContainer.bottomAnchor),
 
             headerStack.heightAnchor.constraint(greaterThanOrEqualToConstant: 80),
             inputRow.heightAnchor.constraint(equalToConstant: 56),
             buttonRow.heightAnchor.constraint(equalToConstant: 60),
         ])
+
+        // Image view constraints (fullscreen when connected)
+        imageHeightConstraint = imageView.heightAnchor.constraint(equalToConstant: 300)
+        NSLayoutConstraint.activate([
+            imageView.topAnchor.constraint(equalTo: controlsContainer.bottomAnchor, constant: 20),
+            imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            imageHeightConstraint,
+        ])
+    }
+
+    private func setFullscreen(_ fullscreen: Bool) {
+        if fullscreen {
+            // Hide controls, show video fullscreen
+            controlsContainer.isHidden = true
+            imageView.isHidden = false
+            imageHeightConstraint.constant = 0
+            NSLayoutConstraint.deactivate([
+                imageView.topAnchor.constraint(equalTo: controlsContainer.bottomAnchor, constant: 20),
+            ])
+            NSLayoutConstraint.activate([
+                imageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 0),
+                imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
+            ])
+            imageView.layer.cornerRadius = 0
+            imageView.layer.borderWidth = 0
+        } else {
+            // Show controls, video in box
+            controlsContainer.isHidden = false
+            imageView.isHidden = true
+            imageHeightConstraint.constant = 300
+            NSLayoutConstraint.deactivate([
+                imageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 0),
+                imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
+            ])
+            NSLayoutConstraint.activate([
+                imageView.topAnchor.constraint(equalTo: controlsContainer.bottomAnchor, constant: 20),
+            ])
+            imageView.layer.cornerRadius = 16
+            imageView.layer.borderWidth = 2
+            imageView.layer.borderColor = UIColor.systemGray4.cgColor
+        }
+        view.layoutIfNeeded()
     }
 
     private func loadSavedSettings() {
@@ -174,6 +239,8 @@ class ViewController: UIViewController {
         statusLabel.text = "Connecting to \(ip):\(port)..."
         statusLabel.textColor = .systemBlue
 
+        setFullscreen(false)
+
         let urlString = "http://\(ip):\(port)/stream"
         guard let url = URL(string: urlString) else {
             showAlert("Invalid IP address")
@@ -197,8 +264,10 @@ class ViewController: UIViewController {
         dataTask = nil
         buffer.removeAll()
         imageView.image = nil
+        imageView.isHidden = true
         statusLabel.text = "Disconnected"
-        statusLabel.textColor = .secondaryLabel
+        statusLabel.textColor = .darkGray
+        setFullscreen(false)
     }
 
     private func showAlert(_ message: String) {
@@ -224,6 +293,9 @@ extension ViewController: URLSessionDataDelegate {
             if let image = UIImage(data: jpegData) {
                 DispatchQueue.main.async {
                     self.imageView.image = image
+                    if !self.imageView.isHidden {
+                        self.setFullscreen(true)
+                    }
                     if self.statusLabel.text != "Connected - Streaming" {
                         self.statusLabel.text = "Connected - Streaming"
                         self.statusLabel.textColor = .systemGreen

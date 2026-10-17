@@ -15,11 +15,13 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var mediaProjectionManager: MediaProjectionManager
     private lateinit var ipText: TextView
+    private lateinit var portText: TextView
     private lateinit var statusText: TextView
     private lateinit var startButton: Button
     private var isCasting = false
 
     private val REQUEST_CODE = 1001
+    private val CAST_PORT = 8080
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,10 +30,11 @@ class MainActivity : AppCompatActivity() {
         mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
 
         ipText = findViewById(R.id.ipText)
+        portText = findViewById(R.id.portText)
         statusText = findViewById(R.id.statusText)
         startButton = findViewById(R.id.startButton)
 
-        // Show IP address on launch
+        // Show IP address and port on launch
         displayIpAddress()
 
         startButton.setOnClickListener {
@@ -49,11 +52,14 @@ class MainActivity : AppCompatActivity() {
             val ip = getLocalIpAddress()
             if (ip != null) {
                 ipText.text = ip
+                portText.text = "Port: $CAST_PORT"
             } else {
                 ipText.text = "Not connected"
+                portText.text = "Port: $CAST_PORT"
             }
         } catch (e: Exception) {
             ipText.text = "Error"
+            portText.text = "Port: $CAST_PORT"
         }
     }
 

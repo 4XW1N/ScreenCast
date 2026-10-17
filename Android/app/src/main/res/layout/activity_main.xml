@@ -29,7 +29,7 @@
         android:id="@+id/ipLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Your IP Address:"
+        android:text="Your IP Address & Port:"
         android:textSize="16sp"
         android:textColor="#333333"
         android:layout_marginTop="40dp"/>
@@ -47,10 +47,20 @@
         android:background="#F0F0F0"/>
 
     <TextView
+        android:id="@+id/portText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Port: 8080"
+        android:textSize="16sp"
+        android:textColor="#FF6200EE"
+        android:textStyle="bold"
+        android:layout_marginTop="4dp"/>
+
+    <TextView
         android:id="@+id/instructionText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Enter this IP on your iPad"
+        android:text="Enter this IP and port on your iPad"
         android:textSize="14sp"
         android:textColor="#666666"
         android:layout_marginTop="8dp"/>
