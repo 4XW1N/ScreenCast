@@ -130,6 +130,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        android.util.Log.i("MainActivity", "onActivityResult requestCode=$requestCode resultCode=$resultCode data=${data != null}")
         if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             // Start streaming service with projection data
             val serviceIntent = Intent(this, ScreenCastService::class.java).apply {

@@ -20,6 +20,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.Surface
 import android.view.WindowManager
 import java.io.ByteArrayOutputStream
@@ -28,6 +29,8 @@ import java.net.ServerSocket
 import java.net.Socket
 
 class ScreenCastService : Service() {
+
+    private val TAG = "ScreenCastService"
 
     private var mediaProjectionManager: MediaProjectionManager? = null
     private var mediaProjection: MediaProjection? = null
@@ -44,19 +47,22 @@ class ScreenCastService : Service() {
     private val CHANNEL_ID = "screen_cast_channel"
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+        Log.i(TAG, "onStartCommand called")
         // Start foreground - notifications required on Android 8+
         try {
             startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Starting..."))
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "startForeground failed", e)
             // Notifications blocked - server may still work briefly but Android may kill service
         }
 
         try {
             val resultCode = intent.getIntExtra("mediaProjectionResultCode", -1)
             val data = intent.getParcelableExtra<Intent>("mediaProjectionData")
+            Log.i(TAG, "resultCode=$resultCode data=${data != null} isRunning=$isRunning")
 
             if (resultCode == -1 || data == null || isRunning) {
+                Log.w(TAG, "Missing projection data or already running, returning")
                 return START_STICKY
             }
 
@@ -64,12 +70,13 @@ class ScreenCastService : Service() {
             mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, data)
 
             if (mediaProjection == null) {
+                Log.e(TAG, "mediaProjection is null")
                 return START_STICKY
             }
 
             startCapture()
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "onStartCommand error", e)
         }
         return START_STICKY
     }
@@ -90,6 +97,7 @@ class ScreenCastService : Service() {
             val width = metrics.widthPixels
             val height = metrics.heightPixels
             val dpi = metrics.densityDpi
+            Log.i(TAG, "startCapture ${width}x$height dpi=$dpi")
 
             handlerThread = HandlerThread("ScreenCastHandler")
             handlerThread?.start()
@@ -98,11 +106,13 @@ class ScreenCastService : Service() {
             // Android 14 (API 34) requires a registered callback before creating the virtual display
             mediaProjection!!.registerCallback(object : MediaProjection.Callback() {
                 override fun onStop() {
+                    Log.w(TAG, "MediaProjection onStop")
                     isRunning = false
                 }
             }, handler)
 
             imageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 2)
+            Log.i(TAG, "imageReader created")
 
             virtualDisplay = mediaProjection!!.createVirtualDisplay(
                 "ScreenCast",
@@ -110,6 +120,7 @@ class ScreenCastService : Service() {
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 imageReader!!.surface, null, null
             )
+            Log.i(TAG, "virtualDisplay created: ${virtualDisplay != null}")
 
             isRunning = true
             serverThread = Thread {
@@ -117,7 +128,7 @@ class ScreenCastService : Service() {
             }
             serverThread?.start()
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "startCapture failed", e)
             stopCapture()
         }
     }
@@ -141,20 +152,22 @@ class ScreenCastService : Service() {
     private fun startMjpegServer() {
         try {
             serverSocket = ServerSocket(PORT)
+            Log.i(TAG, "MJPEG server listening on port $PORT")
             // Notify that server is ready
             startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Server ready on port $PORT"))
             while (isRunning && !serverSocket!!.isClosed) {
                 try {
                     val client = serverSocket!!.accept()
+                    Log.i(TAG, "client connected: ${client.inetAddress}")
                     Thread {
                         handleClient(client)
                     }.start()
                 } catch (e: Exception) {
-                    if (isRunning) e.printStackTrace()
+                    if (isRunning) Log.e(TAG, "accept error", e)
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Server failed to start", e)
             startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Server failed: ${e.message}"))
         }
     }
