@@ -19,7 +19,7 @@ xcodebuild build \
 
 echo ""
 echo "=== Step 2: Find built binary ==="
-BINARY=$(find build/DerivedData -name "ScreenCast" -type f -executable | head -1)
+BINARY=$(find build/DerivedData -name "ScreenCast" -type f -perm -111 | head -1)
 if [ -z "$BINARY" ]; then
   echo "ERROR: Binary not found in DerivedData!"
   find build/DerivedData -type f -executable 2>/dev/null | head -20
