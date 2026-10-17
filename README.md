@@ -233,10 +233,6 @@ cd iOS
 open ScreenCast.xcodeproj
 ```
 
-## License
-
-MIT License - Feel free to use and modify.
-
 ## Contributing
 
 PRs welcome! Areas for improvement:
