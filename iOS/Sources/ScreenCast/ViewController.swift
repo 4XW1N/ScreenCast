@@ -16,11 +16,16 @@ class ViewController: UIViewController {
     private var session: URLSession?
     private var dataTask: URLSessionDataTask?
     private var isConnected = false
+    private var hasVideo = false
     private var buffer = Data()
 
     // Constraint references for toggling fullscreen
     private var imageHeightConstraint: NSLayoutConstraint!
-    private var controlsContainerHeightConstraint: NSLayoutConstraint!
+    private var imageLeadingConstraint: NSLayoutConstraint!
+    private var imageTrailingConstraint: NSLayoutConstraint!
+    private var imageTopToControlsConstraint: NSLayoutConstraint!
+    private var imageTopToSafeAreaConstraint: NSLayoutConstraint!
+    private var imageBottomToViewConstraint: NSLayoutConstraint!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -147,6 +152,9 @@ class ViewController: UIViewController {
         imageView.layer.borderColor = UIColor.systemGray4.cgColor
         imageView.clipsToBounds = true
         imageView.isHidden = true
+        imageView.isUserInteractionEnabled = true
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(videoTapped))
+        imageView.addGestureRecognizer(tapGesture)
         view.addSubview(imageView)
 
         // Controls container constraints
@@ -171,10 +179,16 @@ class ViewController: UIViewController {
 
         // Image view constraints (fullscreen when connected)
         imageHeightConstraint = imageView.heightAnchor.constraint(equalToConstant: 300)
+        imageLeadingConstraint = imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16)
+        imageTrailingConstraint = imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
+        imageTopToControlsConstraint = imageView.topAnchor.constraint(equalTo: controlsContainer.bottomAnchor, constant: 20)
+        imageTopToSafeAreaConstraint = imageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 0)
+        imageBottomToViewConstraint = imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0)
+
         NSLayoutConstraint.activate([
-            imageView.topAnchor.constraint(equalTo: controlsContainer.bottomAnchor, constant: 20),
-            imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            imageLeadingConstraint,
+            imageTrailingConstraint,
+            imageTopToControlsConstraint,
             imageHeightConstraint,
         ])
     }
@@ -184,33 +198,38 @@ class ViewController: UIViewController {
             // Hide controls, show video fullscreen
             controlsContainer.isHidden = true
             imageView.isHidden = false
-            imageHeightConstraint.constant = 0
-            NSLayoutConstraint.deactivate([
-                imageView.topAnchor.constraint(equalTo: controlsContainer.bottomAnchor, constant: 20),
-            ])
-            NSLayoutConstraint.activate([
-                imageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 0),
-                imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
-            ])
+            imageTopToControlsConstraint.isActive = false
+            imageHeightConstraint.isActive = false
+            imageLeadingConstraint.constant = 0
+            imageTrailingConstraint.constant = -0
+            imageTopToSafeAreaConstraint.isActive = true
+            imageBottomToViewConstraint.isActive = true
             imageView.layer.cornerRadius = 0
             imageView.layer.borderWidth = 0
         } else {
-            // Show controls, video in box
+            // Show controls, video in box (if we have video)
             controlsContainer.isHidden = false
-            imageView.isHidden = true
-            imageHeightConstraint.constant = 300
-            NSLayoutConstraint.deactivate([
-                imageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 0),
-                imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
-            ])
-            NSLayoutConstraint.activate([
-                imageView.topAnchor.constraint(equalTo: controlsContainer.bottomAnchor, constant: 20),
-            ])
+            imageView.isHidden = !hasVideo
+            imageTopToSafeAreaConstraint.isActive = false
+            imageBottomToViewConstraint.isActive = false
+            imageHeightConstraint.isActive = true
+            imageLeadingConstraint.constant = 16
+            imageTrailingConstraint.constant = -16
+            imageTopToControlsConstraint.isActive = true
             imageView.layer.cornerRadius = 16
             imageView.layer.borderWidth = 2
             imageView.layer.borderColor = UIColor.systemGray4.cgColor
         }
         view.layoutIfNeeded()
+    }
+
+    @objc private func videoTapped() {
+        // In fullscreen -> reveal controls; in the box view -> go fullscreen
+        if controlsContainer.isHidden {
+            setFullscreen(false)
+        } else {
+            setFullscreen(true)
+        }
     }
 
     private func loadSavedSettings() {
@@ -234,6 +253,7 @@ class ViewController: UIViewController {
 
         saveSettings()
         isConnected = true
+        hasVideo = false
         connectButton.isHidden = true
         disconnectButton.isHidden = false
         statusLabel.text = "Connecting to \(ip):\(port)..."
@@ -256,6 +276,7 @@ class ViewController: UIViewController {
 
     @objc private func disconnectTapped() {
         isConnected = false
+        hasVideo = false
         connectButton.isHidden = false
         disconnectButton.isHidden = true
         dataTask?.cancel()
@@ -293,7 +314,9 @@ extension ViewController: URLSessionDataDelegate {
             if let image = UIImage(data: jpegData) {
                 DispatchQueue.main.async {
                     self.imageView.image = image
-                    if !self.imageView.isHidden {
+                    self.hasVideo = true
+                    // Go fullscreen on the first frame, or whenever the video is not visible yet
+                    if self.imageView.isHidden || self.controlsContainer.isHidden {
                         self.setFullscreen(true)
                     }
                     if self.statusLabel.text != "Connected - Streaming" {
