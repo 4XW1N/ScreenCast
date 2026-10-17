@@ -176,13 +176,17 @@ class ScreenCastService : Service() {
     private fun captureFrame(quality: Int): ByteArray? {
         return try {
             val image = imageReader?.acquireLatestImage() ?: return null
-            val buffer = image.planes[0].buffer
             val w = image.width
             val h = image.height
 
-            val yuvImage = android.graphics.YuvImage(buffer.array(), ImageFormat.NV21, w, h, null)
+            // YUV_420_888 has multiple planes; convert to JPEG via YuvImage
+            val yuvImage = YuvImage(
+                image.planes[0].buffer.array(),
+                ImageFormat.NV21, w, h, null
+            )
             val output = ByteArrayOutputStream()
             yuvImage.compressToJpeg(Rect(0, 0, w, h), quality, output)
+            image.close()
             output.toByteArray()
         } catch (e: Exception) {
             e.printStackTrace()
