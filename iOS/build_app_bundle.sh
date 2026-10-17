@@ -42,8 +42,57 @@ mkdir -p "$APP_DIR/_CodeSignature"
 cp "$BINARY" "$APP_DIR/ScreenCast"
 chmod +x "$APP_DIR/ScreenCast"
 
-# Copy Info.plist from source
-cp "$IOS_DIR/Sources/ScreenCast/Info.plist" "$APP_DIR/Info.plist"
+# Write Info.plist with literal values (no build variables)
+cat > "$APP_DIR/Info.plist" << 'PLISTEOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>ScreenCast</string>
+    <key>CFBundleDisplayName</key>
+    <string>ScreenCast</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.screencast.receiver</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>ScreenCast</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.2</string>
+    <key>CFBundleVersion</key>
+    <string>5</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UIDeviceFamily</key>
+    <array>
+        <integer>1</integer>
+        <integer>2</integer>
+    </array>
+    <key>UIRequiresFullScreen</key>
+    <true/>
+</dict>
+</plist>
+PLISTEOF
 
 # Create PkgInfo
 echo "APPL????" > "$APP_DIR/PkgInfo"
