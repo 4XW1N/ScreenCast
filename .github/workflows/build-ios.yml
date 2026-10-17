@@ -40,7 +40,9 @@ jobs:
 
       - name: Generate Xcode project
         working-directory: ./iOS
-        run: xcodegen generate --spec project.yml
+        run: |
+          rm -rf ScreenCast.xcodeproj
+          xcodegen generate --spec project.yml
 
       - name: Build and Archive
         working-directory: ./iOS
