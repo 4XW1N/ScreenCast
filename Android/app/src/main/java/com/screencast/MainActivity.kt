@@ -2,15 +2,16 @@ package com.screencast
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationManagerCompat
 import java.net.Inet4Address
 import java.net.NetworkInterface
 
@@ -25,6 +26,7 @@ class MainActivity : AppCompatActivity() {
 
     private val REQUEST_CODE = 1001
     private val CAST_PORT = 8080
+    private val NOTIF_PERMISSION_CODE = 2001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,12 +42,16 @@ class MainActivity : AppCompatActivity() {
         // Show IP address and port on launch
         displayIpAddress()
 
+        // Android 13+: request notification permission (required for foreground service)
+        if (Build.VERSION.SDK_INT >= 33 && !NotificationManagerCompat.from(this).areNotificationsEnabled()) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), NOTIF_PERMISSION_CODE)
+        }
+
         startButton.setOnClickListener {
             if (!isCasting) {
                 // Check if notifications are enabled (required for foreground service on Android 8+)
-                val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M && !nm.isNotificationPolicyAccessGranted) {
-                    // Notifications may be blocked - warn user
+                if (!NotificationManagerCompat.from(this).areNotificationsEnabled()) {
+                    // Notifications are blocked - warn user
                     AlertDialog.Builder(this)
                         .setTitle("Notifications Required")
                         .setMessage("ScreenCast needs notifications enabled to run the streaming service. Please enable notifications for this app in Settings, then try again.")
@@ -65,6 +71,19 @@ class MainActivity : AppCompatActivity() {
                 }
             } else {
                 stopCasting()
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == NOTIF_PERMISSION_CODE) {
+            if (NotificationManagerCompat.from(this).areNotificationsEnabled()) {
+                statusText.text = "Notifications enabled - tap Start Casting"
+                statusText.setTextColor(android.graphics.Color.parseColor("#4CAF50"))
+            } else {
+                statusText.text = "Notifications blocked - enable in Settings"
+                statusText.setTextColor(android.graphics.Color.parseColor("#F44336"))
             }
         }
     }
