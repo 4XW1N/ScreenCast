@@ -19,77 +19,97 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = UIColor(red: 0.92, green: 0.94, blue: 0.98, alpha: 1.0)
         setupUI()
         loadSavedSettings()
     }
 
     private func setupUI() {
+        // Use a single container stack view for everything
+        let container = UIStackView()
+        container.axis = .vertical
+        container.alignment = .fill
+        container.spacing = 24
+        container.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(container)
+
         // Header
-        let headerStack = UIStackView()
-        headerStack.axis = .vertical
-        headerStack.alignment = .center
-        headerStack.spacing = 8
-        headerStack.translatesAutoresizingMaskIntoConstraints = false
-
-        let iconLabel = UILabel()
-        iconLabel.text = "📱"
-        iconLabel.font = .systemFont(ofSize: 48)
-
         let titleLabel = UILabel()
         titleLabel.text = "ScreenCast Receiver"
-        titleLabel.font = .systemFont(ofSize: 28, weight: .bold)
-        titleLabel.textColor = .label
+        titleLabel.font = .systemFont(ofSize: 40, weight: .bold)
+        titleLabel.textAlignment = .center
+        titleLabel.textColor = UIColor(red: 0.25, green: 0.13, blue: 0.93, alpha: 1.0)
 
         let subtitleLabel = UILabel()
         subtitleLabel.text = "Receive Android screen on iPad"
-        subtitleLabel.font = .systemFont(ofSize: 16)
+        subtitleLabel.font = .systemFont(ofSize: 20)
+        subtitleLabel.textAlignment = .center
         subtitleLabel.textColor = .secondaryLabel
 
-        headerStack.addArrangedSubview(iconLabel)
-        headerStack.addArrangedSubview(titleLabel)
-        headerStack.addArrangedSubview(subtitleLabel)
-        view.addSubview(headerStack)
+        let headerStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
+        headerStack.axis = .vertical
+        headerStack.alignment = .center
+        headerStack.spacing = 8
 
-        // IP Text Field
+        // IP field + Port field row
+        let inputRow = UIStackView()
+        inputRow.axis = .horizontal
+        inputRow.alignment = .fill
+        inputRow.spacing = 16
+        inputRow.distribution = .fill
+
         ipTextField = UITextField()
-        ipTextField.placeholder = "Android IP Address"
+        ipTextField.placeholder = "Android IP Address (e.g. 192.168.1.50)"
         ipTextField.borderStyle = .roundedRect
         ipTextField.autocapitalizationType = .none
         ipTextField.keyboardType = .numbersAndPunctuation
         ipTextField.backgroundColor = .white
-        ipTextField.translatesAutoresizingMaskIntoConstraints = false
+        ipTextField.font = .systemFont(ofSize: 20)
+        ipTextField.heightAnchor.constraint(equalToConstant: 56).isActive = true
 
-        // Port Input
         portTextField = UITextField()
         portTextField.placeholder = "8080"
         portTextField.borderStyle = .roundedRect
         portTextField.keyboardType = .numberPad
         portTextField.text = "8080"
         portTextField.backgroundColor = .white
-        portTextField.translatesAutoresizingMaskIntoConstraints = false
+        portTextField.font = .systemFont(ofSize: 20)
+        portTextField.heightAnchor.constraint(equalToConstant: 56).isActive = true
+        portTextField.widthAnchor.constraint(equalToConstant: 140).isActive = true
 
-        // Connect Button
+        inputRow.addArrangedSubview(ipTextField)
+        inputRow.addArrangedSubview(portTextField)
+
+        // Buttons row
+        let buttonRow = UIStackView()
+        buttonRow.axis = .horizontal
+        buttonRow.alignment = .fill
+        buttonRow.spacing = 16
+        buttonRow.distribution = .fillEqually
+
         connectButton = UIButton(type: .system)
         connectButton.setTitle("Connect", for: .normal)
-        connectButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
+        connectButton.titleLabel?.font = .systemFont(ofSize: 20, weight: .semibold)
         connectButton.backgroundColor = UIColor(red: 0.38, green: 0.78, blue: 0.42, alpha: 1.0)
         connectButton.setTitleColor(.white, for: .normal)
-        connectButton.layer.cornerRadius = 10
-        connectButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        connectButton.layer.cornerRadius = 14
+        connectButton.heightAnchor.constraint(equalToConstant: 60).isActive = true
         connectButton.addTarget(self, action: #selector(connectTapped), for: .touchUpInside)
 
-        // Disconnect Button
         disconnectButton = UIButton(type: .system)
         disconnectButton.setTitle("Disconnect", for: .normal)
-        disconnectButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
+        disconnectButton.titleLabel?.font = .systemFont(ofSize: 20, weight: .semibold)
         disconnectButton.backgroundColor = .systemRed
         disconnectButton.setTitleColor(.white, for: .normal)
-        disconnectButton.layer.cornerRadius = 10
-        disconnectButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        disconnectButton.layer.cornerRadius = 14
+        disconnectButton.heightAnchor.constraint(equalToConstant: 60).isActive = true
         disconnectButton.addTarget(self, action: #selector(disconnectTapped), for: .touchUpInside)
         disconnectButton.isHidden = true
 
-        // Image View for MJPEG stream
+        buttonRow.addArrangedSubview(connectButton)
+        buttonRow.addArrangedSubview(disconnectButton)
+
+        // Image view for MJPEG stream
         imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         imageView.backgroundColor = .black
@@ -98,54 +118,33 @@ class ViewController: UIViewController {
         imageView.layer.borderColor = UIColor.systemGray4.cgColor
         imageView.clipsToBounds = true
 
-        // Status Label
+        // Status label
         statusLabel = UILabel()
         statusLabel.text = "Enter Android IP and tap Connect"
         statusLabel.textAlignment = .center
         statusLabel.textColor = .secondaryLabel
-        statusLabel.font = .systemFont(ofSize: 16)
+        statusLabel.font = .systemFont(ofSize: 18)
         statusLabel.numberOfLines = 0
 
-        // Add to view
-        view.addSubview(headerStack)
-        view.addSubview(ipTextField)
-        view.addSubview(portTextField)
-        view.addSubview(connectButton)
-        view.addSubview(disconnectButton)
-        view.addSubview(imageView)
-        view.addSubview(statusLabel)
+        // Add all to container
+        container.addArrangedSubview(headerStack)
+        container.addArrangedSubview(inputRow)
+        container.addArrangedSubview(buttonRow)
+        container.addArrangedSubview(imageView)
+        container.addArrangedSubview(statusLabel)
 
+        // Constraints - pin container to safe area with padding
         NSLayoutConstraint.activate([
-            headerStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
-            headerStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            headerStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            container.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
+            container.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 60),
+            container.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -60),
+            container.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
 
-            ipTextField.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 24),
-            ipTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            ipTextField.trailingAnchor.constraint(equalTo: portTextField.leadingAnchor, constant: -12),
-            ipTextField.heightAnchor.constraint(equalToConstant: 48),
+            imageView.heightAnchor.constraint(greaterThanOrEqualToConstant: 300),
 
-            portTextField.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 24),
-            portTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            portTextField.widthAnchor.constraint(equalToConstant: 80),
-            portTextField.heightAnchor.constraint(equalToConstant: 48),
-
-            connectButton.topAnchor.constraint(equalTo: ipTextField.bottomAnchor, constant: 16),
-            connectButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            connectButton.widthAnchor.constraint(equalToConstant: 180),
-
-            disconnectButton.topAnchor.constraint(equalTo: ipTextField.bottomAnchor, constant: 16),
-            disconnectButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            disconnectButton.widthAnchor.constraint(equalToConstant: 180),
-
-            imageView.topAnchor.constraint(equalTo: connectButton.bottomAnchor, constant: 20),
-            imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            imageView.bottomAnchor.constraint(equalTo: statusLabel.topAnchor, constant: -20),
-
-            statusLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            statusLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
+            headerStack.heightAnchor.constraint(greaterThanOrEqualToConstant: 80),
+            inputRow.heightAnchor.constraint(equalToConstant: 56),
+            buttonRow.heightAnchor.constraint(equalToConstant: 60),
         ])
     }
 
@@ -181,7 +180,6 @@ class ViewController: UIViewController {
             return
         }
 
-        // Create URLSession for MJPEG streaming
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
         session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
@@ -215,7 +213,6 @@ extension ViewController: URLSessionDataDelegate {
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         buffer.append(data)
 
-        // Find JPEG frames in the MJPEG stream
         while let startRange = buffer.range(of: Data([0xFF, 0xD8, 0xFF])) {
             guard let endRange = buffer.range(of: Data([0xFF, 0xD9]), in: startRange.lowerBound..<buffer.count) else {
                 break
@@ -235,7 +232,6 @@ extension ViewController: URLSessionDataDelegate {
             }
         }
 
-        // Prevent buffer from growing too large
         if buffer.count > 5_000_000 {
             buffer.removeFirst(1_000_000)
         }
