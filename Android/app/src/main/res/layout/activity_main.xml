@@ -8,15 +8,52 @@
     android:background="#FFFFFF">
 
     <TextView
+        android:id="@+id/titleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ScreenCast"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="#FF6200EE"/>
+
+    <TextView
+        android:id="@+id/subtitleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cast your screen to iPad"
+        android:textSize="14sp"
+        android:textColor="#888888"
+        android:layout_marginTop="4dp"/>
+
+    <TextView
+        android:id="@+id/ipLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Your IP Address:"
+        android:textSize="16sp"
+        android:textColor="#333333"
+        android:layout_marginTop="40dp"/>
+
+    <TextView
         android:id="@+id/ipText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="IP: ..."
-        android:textSize="20sp"
+        android:text="Loading..."
+        android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="#FF6200EE"
-        android:layout_marginBottom="16dp"
-        android:gravity="center"/>
+        android:layout_marginTop="8dp"
+        android:padding="16dp"
+        android:background="#F0F0F0"/>
+
+    <TextView
+        android:id="@+id/instructionText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enter this IP on your iPad"
+        android:textSize="14sp"
+        android:textColor="#666666"
+        android:layout_marginTop="8dp"/>
 
     <TextView
         android:id="@+id/statusText"
@@ -24,7 +61,7 @@
         android:layout_height="wrap_content"
         android:text="Ready to cast"
         android:textSize="16sp"
-        android:layout_marginBottom="24dp"/>
+        android:layout_marginTop="32dp"/>
 
     <Button
         android:id="@+id/startButton"

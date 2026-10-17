@@ -3304,8 +3304,11 @@ id immediateStop
 id included
 id indeterminate
 id info
+id instructionText
 id invisible
 id inward
+id ipLabel
+id ipText
 id italic
 id item_touch_helper_previous_elevation
 id jumpToEnd
@@ -3508,6 +3511,7 @@ id stop
 id stretch
 id submenuarrow
 id submit_area
+id subtitleText
 id supportScrollUp
 id tabMode
 id tag_accessibility_actions
@@ -3542,6 +3546,7 @@ id textinput_suffix_text
 id time
 id title
 id titleDividerNoCustom
+id titleText
 id title_template
 id toggle
 id top

@@ -6,8 +6,13 @@ color purple_700
 color teal_200
 color teal_700
 color white
+id instructionText
+id ipLabel
+id ipText
 id startButton
 id statusText
+id subtitleText
+id titleText
 layout activity_main
 mipmap ic_launcher
 mipmap ic_launcher_round
