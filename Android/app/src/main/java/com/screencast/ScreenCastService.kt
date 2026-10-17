@@ -129,6 +129,8 @@ class ScreenCastService : Service() {
     private fun startMjpegServer() {
         try {
             serverSocket = ServerSocket(PORT)
+            // Notify that server is ready
+            startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Server ready on port $PORT"))
             while (isRunning && !serverSocket!!.isClosed) {
                 try {
                     val client = serverSocket!!.accept()
@@ -141,6 +143,7 @@ class ScreenCastService : Service() {
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            startForeground(NOTIFICATION_ID, createNotification("ScreenCast - Server failed: ${e.message}"))
         }
     }
 
