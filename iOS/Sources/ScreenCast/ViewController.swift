@@ -3,7 +3,7 @@
 
 import UIKit
 
-class ViewController: UIViewController, URLSessionDataDelegate {
+class ViewController: UIViewController {
 
     private var imageView: UIImageView!
     private var ipTextField: UITextField!
