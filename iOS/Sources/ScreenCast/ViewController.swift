@@ -348,7 +348,7 @@ extension ViewController: URLSessionDataDelegate {
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         buffer.append(data)
 
-        while let startRange = buffer.range(of: Data([0xFF, 0xD8, 0xFF])) {
+        while let startRange = buffer.range(of: Data([0xFF, 0xD8])) {
             guard let endRange = buffer.range(of: Data([0xFF, 0xD9]), in: startRange.lowerBound..<buffer.count) else {
                 break
             }
