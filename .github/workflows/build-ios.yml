@@ -34,118 +34,14 @@ jobs:
         run: |
           sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer
           xcodebuild -version
-          swift --version
 
-      - name: Build with xcodebuild (iOS device)
+      - name: Build app bundle and IPA
         working-directory: ./iOS
         env:
           CONFIGURATION: ${{ github.event.inputs.configuration || 'Release' }}
         run: |
-          xcodebuild build \
-            -scheme ScreenCast \
-            -configuration "$CONFIGURATION" \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath "$PWD/build/DerivedData" \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO
-
-      - name: Create app bundle
-        working-directory: ./iOS
-        run: |
-          # Find the built binary in DerivedData
-          BINARY=$(find build/DerivedData -name "ScreenCast" -type f -executable | head -1)
-          if [ -z "$BINARY" ]; then
-            echo "Binary not found in DerivedData!"
-            find build/DerivedData -type f -executable 2>/dev/null | head -20
-            exit 1
-          fi
-          echo "Found binary: $BINARY"
-
-          # Create iOS app bundle structure (flat, not macOS Contents/)
-          APP_DIR="build/ScreenCast.app"
-          rm -rf "$APP_DIR"
-          mkdir -p "$APP_DIR"
-          mkdir -p "$APP_DIR/_CodeSignature"
-
-          # Copy binary
-          cp "$BINARY" "$APP_DIR/ScreenCast"
-          chmod +x "$APP_DIR/ScreenCast"
-
-          # Create Info.plist
-          cat > "$APP_DIR/Info.plist" << 'PLISTEOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
-    <key>CFBundleExecutable</key>
-    <string>ScreenCast</string>
-    <key>CFBundleIdentifier</key>
-    <string>com.screencast.receiver</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>ScreenCast</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>1.0.2</string>
-    <key>CFBundleVersion</key>
-    <string>5</string>
-    <key>LSRequiresIPhoneOS</key>
-    <true/>
-    <key>UILaunchScreen</key>
-    <dict/>
-    <key>UISupportedInterfaceOrientations</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-    <key>UISupportedInterfaceOrientations~ipad</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationPortraitUpsideDown</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-    <key>UIDeviceFamily</key>
-    <array>
-        <integer>1</integer>
-        <integer>2</integer>
-    </array>
-    <key>UIRequiresFullScreen</key>
-    <true/>
-</dict>
-</plist>
-PLISTEOF
-
-          # Create PkgInfo
-          echo "APPL????" > "$APP_DIR/PkgInfo"
-
-          # Verify bundle structure
-          echo "--- App bundle contents ---"
-          ls -la "$APP_DIR"
-          find "$APP_DIR" -type f
-
-      - name: Verify binary architecture
-        working-directory: ./iOS
-        run: |
-          lipo -info build/ScreenCast.app/ScreenCast
-
-      - name: Package IPA
-        working-directory: ./iOS
-        run: |
-          rm -rf build/ipa
-          mkdir -p build/ipa/Payload
-          cp -R build/ScreenCast.app build/ipa/Payload/
-          cd build/ipa
-          zip -qr ../ScreenCast.ipa Payload
-          echo "IPA created:"
-          unzip -l ../ScreenCast.ipa | head -25
-          ls -la ../ScreenCast.ipa
+          chmod +x build_app_bundle.sh
+          ./build_app_bundle.sh "$CONFIGURATION"
 
       - name: Upload IPA as artifact
         uses: actions/upload-artifact@v4
