@@ -199,9 +199,15 @@ class ScreenCastService : Service() {
         }
     }
 
+    private var frameCount = 0
+
     private fun captureFrame(quality: Int): ByteArray? {
         return try {
-            val image = imageReader?.acquireLatestImage() ?: return null
+            val image = imageReader?.acquireLatestImage()
+            if (image == null) {
+                if (frameCount < 3) Log.w(TAG, "acquireLatestImage returned null (frameCount=$frameCount)")
+                return null
+            }
             val w = image.width
             val h = image.height
             val nv21 = yuv420ToNv21(image)
@@ -210,9 +216,12 @@ class ScreenCastService : Service() {
             val yuvImage = YuvImage(nv21, ImageFormat.NV21, w, h, null)
             val output = ByteArrayOutputStream()
             yuvImage.compressToJpeg(Rect(0, 0, w, h), quality, output)
-            output.toByteArray()
+            val bytes = output.toByteArray()
+            frameCount++
+            if (frameCount <= 3) Log.i(TAG, "frame #$frameCount ${w}x$h jpeg=${bytes.size} bytes")
+            bytes
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "captureFrame failed", e)
             null
         }
     }
