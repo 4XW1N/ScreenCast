@@ -129,7 +129,6 @@ class ScreenCastService : Service() {
     private fun startMjpegServer() {
         try {
             serverSocket = ServerSocket(PORT)
-            serverSocket!!.setReuseAddress(true)
             while (isRunning && !serverSocket!!.isClosed) {
                 try {
                     val client = serverSocket!!.accept()
