@@ -1,10 +1,9 @@
 package com.screencast
 
-import android.app.AlertDialog
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
-import android.net.wifi.WifiInfo
-import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -15,7 +14,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var mediaProjectionManager: MediaProjectionManager
     private lateinit var statusText: TextView
-    private lateinit var ipText: TextView
     private lateinit var startButton: Button
     private var isCasting = false
 
@@ -25,82 +23,33 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        mediaProjectionManager = getSystemService(MediaProjectionManager::class.java)
+        mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
 
         statusText = findViewById(R.id.statusText)
-        ipText = findViewById(R.id.ipText)
         startButton = findViewById(R.id.startButton)
-
-        updateIpDisplay()
 
         startButton.setOnClickListener {
             if (!isCasting) {
-                requestScreenCapture()
+                val intent = mediaProjectionManager.createScreenCaptureIntent()
+                startActivityForResult(intent, REQUEST_CODE)
             } else {
-                stopCasting()
+                isCasting = false
+                startButton.text = "Start Casting"
+                statusText.text = "Ready to cast"
+                Toast.makeText(this, "Stopped casting", Toast.LENGTH_SHORT).show()
             }
         }
-
-        ipText.setOnClickListener {
-            Toast.makeText(this@MainActivity, "IP: $ipText.text", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun updateIpDisplay() {
-        try {
-            val wifiManager = getSystemService(WifiManager::class.java) as WifiManager
-            val wifiInfo = wifiManager.connectionInfo
-            val ip = intToIp(wifiInfo.ipAddress)
-            ipText.text = "http://$ip:8080/stream"
-        } catch (e: Exception) {
-            ipText.text = "http://localhost:8080/stream"
-        }
-    }
-
-    private fun requestScreenCapture() {
-        val intent = mediaProjectionManager.createScreenCaptureIntent()
-        startActivityForResult(intent, REQUEST_CODE)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
-            data?.let { intent ->
-                val serviceIntent = Intent(this@MainActivity, ScreenCastService::class.java).apply {
-                    putExtra("mediaProjectionResultCode", resultCode)
-                    putExtra("mediaProjectionData", intent)
-                }
-                startForegroundService(serviceIntent)
-                isCasting = true
-                startButton.text = "⏹ Stop Casting"
-                statusText.text = "🔴 Casting Live"
-            }
+        if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            isCasting = true
+            startButton.text = "Stop Casting"
+            statusText.text = "Casting live!"
+            Toast.makeText(this, "Screen capture started!", Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(this@MainActivity, "Permission denied", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    private fun stopCasting() {
-        val intent = Intent(this, ScreenCastService::class.java)
-        stopService(intent)
-        isCasting = false
-        startButton.text = "▶ Start Casting"
-        statusText.text = "⚪ Ready to Cast"
-    }
-
-    private fun intToIp(ipInt: Int): String {
-        return "${(ipInt and 0xFF)}.${(ipInt shr 8 and 0xFF)}.${(ipInt shr 16 and 0xFF)}.${(ipInt shr 24 and 0xFF)}"
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (isCasting) {
-            stopService(Intent(this, ScreenCastService::class.java))
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        updateIpDisplay()
     }
 }

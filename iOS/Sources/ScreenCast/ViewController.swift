@@ -2,11 +2,10 @@
 //  ScreenCast
 
 import UIKit
-import WebKit
 
 class ViewController: UIViewController {
 
-    private var webView: WKWebView!
+    private var imageView: UIImageView!
     private var urlTextField: UITextField!
     private var portTextField: UITextField!
     private var connectButton: UIButton!
@@ -14,11 +13,15 @@ class ViewController: UIViewController {
     private var statusLabel: UILabel!
     private var settingsButton: UIButton!
 
+    private var session: URLSession?
+    private var dataTask: URLSessionDataTask?
+    private var isConnected = false
+    private var buffer = Data()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         title = "ScreenCast Receiver"
-
         setupUI()
         loadSavedSettings()
     }
@@ -94,15 +97,14 @@ class ViewController: UIViewController {
         disconnectButton.isHidden = true
         disconnectButton.translatesAutoresizingMaskIntoConstraints = false
 
-        // Web View
-        let config = WKWebViewConfiguration()
-        config.allowsInlineMediaPlayback = true
-        webView = WKWebView(frame: .zero, configuration: config)
-        webView.translatesAutoresizingMaskIntoConstraints = false
-        webView.backgroundColor = .black
-        webView.layer.cornerRadius = 16
-        webView.layer.borderWidth = 2
-        webView.layer.borderColor = UIColor.systemGray4.cgColor
+        // Image View for MJPEG stream
+        imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.backgroundColor = .black
+        imageView.layer.cornerRadius = 16
+        imageView.layer.borderWidth = 2
+        imageView.layer.borderColor = UIColor.systemGray4.cgColor
+        imageView.translatesAutoresizingMaskIntoConstraints = false
 
         // Status Label
         statusLabel = UILabel()
@@ -126,7 +128,7 @@ class ViewController: UIViewController {
         view.addSubview(portTextField)
         view.addSubview(connectButton)
         view.addSubview(disconnectButton)
-        view.addSubview(webView)
+        view.addSubview(imageView)
         view.addSubview(statusLabel)
         view.addSubview(settingsButton)
 
@@ -155,10 +157,10 @@ class ViewController: UIViewController {
             disconnectButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             disconnectButton.heightAnchor.constraint(equalToConstant: 52),
 
-            webView.topAnchor.constraint(equalTo: connectButton.bottomAnchor, constant: 20),
-            webView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            webView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            webView.bottomAnchor.constraint(equalTo: statusLabel.topAnchor, constant: -20),
+            imageView.topAnchor.constraint(equalTo: connectButton.bottomAnchor, constant: 20),
+            imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            imageView.bottomAnchor.constraint(equalTo: statusLabel.topAnchor, constant: -20),
 
             statusLabel.bottomAnchor.constraint(equalTo: settingsButton.topAnchor, constant: -12),
             statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
@@ -200,22 +202,24 @@ class ViewController: UIViewController {
         statusLabel.text = "🔄 Connecting to Android..."
         statusLabel.textColor = .systemBlue
 
-        let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30)
-        webView.load(request)
+        // Use URLSession to fetch MJPEG stream
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+        dataTask = session?.dataTask(with: url)
+        dataTask?.resume()
     }
 
     @objc private func disconnectStream() {
         isConnected = false
         connectButton.isHidden = false
         disconnectButton.isHidden = true
-        webView.loadHTMLString("""
-        <html>
-        <body style='background:#000000;color:#ffffff;text-align:center;padding-top:40%;font-family:sans-serif'>
-        <h1>⏹ Disconnected</h1>
-        <p>Tap Connect to start casting</p>
-        </body>
-        </html>
-        """, baseURL: nil)
+        dataTask?.cancel()
+        session?.invalidateAndCancel()
+        session = nil
+        dataTask = nil
+        buffer.removeAll()
+        imageView.image = nil
         statusLabel.text = "Disconnected"
         statusLabel.textColor = .secondaryLabel
     }
@@ -231,6 +235,43 @@ class ViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
+}
 
-    private var isConnected = false
+// MARK: - URLSessionDataDelegate for MJPEG
+extension ViewController: URLSessionDataDelegate {
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        buffer.append(data)
+
+        // Find JPEG frames in the MJPEG stream
+        while let range = buffer.range(of: Data([0xFF, 0xD8, 0xFF])) {
+            // Found start of JPEG
+            let start = range.lowerBound
+            if let endRange = buffer.range(of: Data([0xFF, 0xD9]), in: start..<buffer.count) {
+                let end = endRange.upperBound
+                let jpegData = buffer.subdata(in: start..<end)
+                buffer.removeSubrange(0..<end)
+
+                if let image = UIImage(data: jpegData) {
+                    DispatchQueue.main.async {
+                        self.imageView.image = image
+                        if self.statusLabel.text != "🟢 Connected - Streaming" {
+                            self.statusLabel.text = "🟢 Connected - Streaming"
+                            self.statusLabel.textColor = .systemGreen
+                        }
+                    }
+                }
+            } else {
+                break
+            }
+        }
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        DispatchQueue.main.async {
+            if let error = error {
+                self.statusLabel.text = "❌ Error: \(error.localizedDescription)"
+                self.statusLabel.textColor = .systemRed
+            }
+        }
+    }
 }

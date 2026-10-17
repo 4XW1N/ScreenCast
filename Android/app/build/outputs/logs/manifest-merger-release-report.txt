@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:2:1-37:12
-INJECTED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:2:1-37:12
-INJECTED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:2:1-37:12
-INJECTED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:2:1-37:12
+ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:2:1-29:12
+INJECTED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:2:1-29:12
+INJECTED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:2:1-29:12
+INJECTED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:2:1-29:12
 MERGED from [com.google.android.material:material:1.11.0] /home/aswin/.gradle/caches/transforms-3/cbed64e75e489e8d84e9746d96547138/transformed/material-1.11.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/aswin/.gradle/caches/transforms-3/5a3d8f1450f9a1a04e1bdd38bbf63c11/transformed/constraintlayout-2.1.4/AndroidManifest.xml:2:1-11:12
 MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /home/aswin/.gradle/caches/transforms-3/e7006985deb784b8ab419c541575c54c/transformed/appcompat-resources-1.6.1/AndroidManifest.xml:17:1-22:12
@@ -62,29 +62,17 @@ uses-permission#android.permission.ACCESS_WIFI_STATE
 ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:6:5-76
 	android:name
 		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:6:22-73
-uses-permission#android.permission.ACCESS_NETWORK_STATE
-ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:7:5-79
-	android:name
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:7:22-76
 uses-permission#android.permission.FOREGROUND_SERVICE
-ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:8:5-77
+ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:7:5-77
 	android:name
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:8:22-74
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:7:22-74
 uses-permission#android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION
-ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:9:5-94
+ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:8:5-94
 	android:name
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:9:22-91
-uses-permission#android.permission.RECORD_AUDIO
-ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:10:5-71
-	android:name
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:10:22-68
-uses-permission#android.permission.WAKE_LOCK
-ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:11:5-68
-	android:name
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:11:22-65
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:8:22-91
 application
-ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:13:5-36:19
-INJECTED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:13:5-36:19
+ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:10:5-28:19
+INJECTED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:10:5-28:19
 MERGED from [com.google.android.material:material:1.11.0] /home/aswin/.gradle/caches/transforms-3/cbed64e75e489e8d84e9746d96547138/transformed/material-1.11.0/AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] /home/aswin/.gradle/caches/transforms-3/cbed64e75e489e8d84e9746d96547138/transformed/material-1.11.0/AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/aswin/.gradle/caches/transforms-3/5a3d8f1450f9a1a04e1bdd38bbf63c11/transformed/constraintlayout-2.1.4/AndroidManifest.xml:9:5-20
@@ -106,45 +94,37 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] /home/aswin/.gradle/caches/
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.12.0] /home/aswin/.gradle/caches/transforms-3/d9df576dcaca9e76e24725bc3e0fc475/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:18:9-35
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:15:9-35
 	android:label
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:16:9-41
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:13:9-41
 	android:roundIcon
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:17:9-54
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:14:9-54
 	android:icon
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:15:9-43
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:12:9-43
 	android:allowBackup
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:14:9-35
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:11:9-35
 	android:theme
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:19:9-48
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:16:9-48
 activity#com.screencast.MainActivity
-ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:21:9-30:20
+ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:18:9-27:20
 	android:screenOrientation
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:24:13-49
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:21:13-49
 	android:exported
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:23:13-36
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:20:13-36
 	android:theme
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:25:13-64
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:22:13-64
 	android:name
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:22:13-41
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:19:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:26:13-29:29
+ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:23:13-26:29
 action#android.intent.action.MAIN
-ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:27:17-69
+ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:24:17-69
 	android:name
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:27:25-66
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:24:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:28:17-77
+ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:25:17-77
 	android:name
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:28:27-74
-service#com.screencast.ScreenCastService
-ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:32:9-35:40
-	android:exported
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:35:13-37
-	android:foregroundServiceType
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:34:13-60
-	android:name
-		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:33:13-46
+		ADDED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml:25:27-74
 uses-sdk
 INJECTED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /home/aswin/ScreenCast/Android/app/src/main/AndroidManifest.xml
