@@ -35,49 +35,76 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer
           xcodebuild -version
 
-      - name: Build Universal App (iPhone + iPad)
+      - name: Install xcbeautify
+        run: brew install xcbeautify || true
+
+      - name: Build and Archive
         working-directory: ./iOS
+        env:
+          CONFIGURATION: ${{ github.event.inputs.configuration || 'Release' }}
         run: |
-          xcodebuild \
+          xcodebuild clean archive \
             -scheme ScreenCast \
-            -configuration ${{ github.event.inputs.configuration || 'Release' }} \
-            -destination 'generic/platform=iOS' \
-            -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath build/DerivedData \
-            TARGETED_DEVICE_FAMILY=1,2 \
-            ONLY_ACTIVE_ARCH=NO \
+            -configuration $CONFIGURATION \
+            -sdk iphoneos \
+            -archivePath $PWD/build/ScreenCast.xcarchive \
+            -derivedDataPath $PWD/build/DerivedData \
+            TARGETED_DEVICE_FAMILY="1,2" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            clean build 2>&1
+            2>&1 | xcbeautify
 
-      - name: Package IPA
+      - name: Create ExportOptions.plist
         working-directory: ./iOS
         run: |
-          APP_PATH=$(find build/DerivedData -name "*.app" -path "*Release-iphoneos*" | head -1)
-          if [ -z "$APP_PATH" ]; then
-            echo "ERROR: Built .app not found"
-            find build/DerivedData -name "*.app" -type d
+          cat > ExportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>development</string>
+              <key>compileBitcode</key>
+              <false/>
+              <key>signingStyle</key>
+              <string>automatic</string>
+              <key>stripSwiftSymbols</key>
+              <true/>
+              <key>thinning</key>
+              <string><none></string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Export IPA
+        working-directory: ./iOS
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath $PWD/build/ScreenCast.xcarchive \
+            -exportPath $PWD/build/ipa \
+            -exportOptionsPlist ExportOptions.plist \
+            2>&1 | xcbeautify
+
+      - name: Verify IPA
+        run: |
+          ls -la /home/aswin/ScreenCast/iOS/build/ipa/
+          IPA_PATH=$(find /home/aswin/ScreenCast/iOS/build/ipa -name "*.ipa" | head -1)
+          if [ -f "$IPA_PATH" ]; then
+            echo "IPA found: $IPA_PATH"
+            ls -la "$IPA_PATH"
+          else
+            echo "ERROR: No IPA found!"
             exit 1
           fi
-          
-          echo "Found app at: $APP_PATH"
-          
-          mkdir -p build/ipa/Payload
-          cp -R "$APP_PATH" build/ipa/Payload/
-          
-          cd build/ipa
-          zip -r ../ScreenCast.ipa Payload
-          
-          echo "IPA created at: $(pwd)/ScreenCast.ipa"
-          ls -la ../ScreenCast.ipa
 
       - name: Upload IPA as artifact
         uses: actions/upload-artifact@v4
         with:
           name: ScreenCast-iOS-${{ github.event.inputs.configuration || 'Release' }}
-          path: ./iOS/build/ScreenCast.ipa
+          path: ./iOS/build/ipa/*.ipa
           retention-days: 30
+          compression-level: 6
 
       - name: Create GitHub Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -88,21 +115,17 @@ jobs:
           body: |
             ## ScreenCast iOS Receiver - Auto Build
 
-            ### Download
-            - **IPA**: Download the `ScreenCast.ipa` asset below
-
             ### How to Install
-            1. Download `ScreenCast.ipa` from the release
-            2. Install via AltStore/Sideloadly
-            3. Open the app and enter your Android phone's IP address
-            4. Tap Connect
+            1. Download the `.ipa` file from Artifacts
+            2. Sideload using AltStore, Sideloadly, or similar tool
+            3. Open the app on your iPad
 
             ### How to Use
             1. Start casting on Android phone
-            2. On iPad, enter Android IP (e.g., `192.168.1.50`)
-            3. Tap Connect - Android screen appears on iPad!
+            2. On iPad, enter Android phone's IP address
+            3. Tap Connect
 
-          files: ./iOS/build/ScreenCast.ipa
+          files: ./iOS/build/ipa/*.ipa
           generate_release_notes: true
           draft: false
           prerelease: false
