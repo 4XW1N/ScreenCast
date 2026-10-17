@@ -40,10 +40,14 @@ jobs:
           brew install xcodegen || true
           XCG_VERSION=$(xcodegen --version 2>/dev/null | head -1)
           echo "Current xcodegen: $XCG_VERSION"
-          # If not version 2.x compatible with Xcode 15, install specific version
-          if ! echo "$XCG_VERSION" | grep -qE "2\.[0-3]"; then
+          if ! echo "$XCG_VERSION" | grep -qE "^2\.[0-3]"; then
             brew uninstall --force xcodegen 2>/dev/null || true
-            curl -sL https://github.com/yonaskolb/XcodeGen/releases/download/2.34.0/xcodegen_2.34.0_macos_x86_64.tar.gz -o /tmp/xcodegen.tar.gz
+            # Download specific 2.x release via gh (authenticated, reliable)
+            gh release download 2.34.0 --repo yonaskolb/XcodeGen \
+              -p "xcodegen_2.34.0_macos_x86_64.tar.gz" --dir /tmp/ --clobber 2>/dev/null || \
+              curl -fsSL -A "Mozilla/5.0" \
+                https://github.com/yonaskolb/XcodeGen/releases/download/2.34.0/xcodegen_2.34.0_macos_x86_64.tar.gz \
+                -o /tmp/xcodegen.tar.gz
             tar -xzf /tmp/xcodegen.tar.gz -C /tmp/
             sudo cp /tmp/xcodegen_2.34.0_macos_x86_64/bin/xcodegen /usr/local/bin/xcodegen
             chmod +x /usr/local/bin/xcodegen
