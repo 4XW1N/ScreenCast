@@ -57,11 +57,11 @@ class ScreenCastService : Service() {
         }
 
         try {
-            val resultCode = intent.getIntExtra("mediaProjectionResultCode", -1)
+            val resultCode = intent.getIntExtra("mediaProjectionResultCode", Int.MIN_VALUE)
             val data = intent.getParcelableExtra<Intent>("mediaProjectionData")
             Log.i(TAG, "resultCode=$resultCode data=${data != null} isRunning=$isRunning")
 
-            if (resultCode == -1 || data == null || isRunning) {
+            if (resultCode != android.app.Activity.RESULT_OK || data == null || isRunning) {
                 Log.w(TAG, "Missing projection data or already running, returning")
                 return START_STICKY
             }
