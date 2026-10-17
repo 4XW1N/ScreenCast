@@ -35,14 +35,15 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer
           xcodebuild -version
 
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
-      - name: Generate Xcode project
+      - name: Generate Xcode project from Package.swift
         working-directory: ./iOS
         run: |
-          rm -rf ScreenCast.xcodeproj
-          xcodegen generate --spec project.yml
+          rm -rf ScreenCast.xcodeproj build Packages
+          xcodebuild -createPackageProject \
+            -scheme ScreenCast \
+            -destination 'generic/platform=iOS' \
+            -clonedSourcePackagesDirPath ./Packages \
+            -derivedDataPath ./build/DerivedData
 
       - name: Build and Archive
         working-directory: ./iOS
@@ -72,7 +73,6 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :UIDeviceFamily" "$APP_PATH/Info.plist"
-          /usr/libexec/PlistBuddy -c "Print :MinimumOSVersion" "$APP_PATH/Info.plist"
           echo "--- bundle contents ---"
           ls -la "$APP_PATH"
 
