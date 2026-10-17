@@ -17,16 +17,11 @@
     <key>CFBundleShortVersionString</key>
     <string>1.0.2</string>
     <key>CFBundleVersion</key>
-    <string>3</string>
+    <string>4</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>UILaunchScreen</key>
-    <dict>
-        <key>UIColorName</key>
-        <string>LaunchScreenBackground</string>
-    </dict>
-    <key>UIRequiresFullScreen</key>
-    <true/>
+    <dict/>
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>
@@ -39,15 +34,6 @@
         <string>UIInterfaceOrientationPortraitUpsideDown</string>
         <string>UIInterfaceOrientationLandscapeLeft</string>
         <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-    <key>UIDeviceFamily</key>
-    <array>
-        <integer>1</integer>
-        <integer>2</integer>
-    </array>
-    <key>UIRequiredDeviceCapabilities</key>
-    <array>
-        <string>armv7</string>
     </array>
     <key>NSAppTransportSecurity</key>
     <dict>

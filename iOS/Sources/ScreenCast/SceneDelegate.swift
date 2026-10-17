@@ -1,6 +1,3 @@
-//  SceneDelegate.swift
-//  ScreenCast
-
 import UIKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
