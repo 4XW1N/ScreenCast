@@ -2,10 +2,10 @@ name: Build iOS App
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, master]
     tags: ['v*']
   pull_request:
-    branches: [main]
+    branches: [main, master]
   workflow_dispatch:
     inputs:
       configuration:
@@ -35,16 +35,20 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer
           xcodebuild -version
 
-      - name: Install xcbeautify
-        run: brew install xcbeautify || true
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ./iOS
+        run: xcodegen generate --spec project.yml
 
       - name: Build and Archive
         working-directory: ./iOS
         env:
           CONFIGURATION: ${{ github.event.inputs.configuration || 'Release' }}
         run: |
-          set -o pipefail
           xcodebuild clean archive \
+            -project ScreenCast.xcodeproj \
             -scheme ScreenCast \
             -configuration "$CONFIGURATION" \
             -destination 'generic/platform=iOS' \
@@ -53,35 +57,39 @@ jobs:
             TARGETED_DEVICE_FAMILY="1,2" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            2>&1 | xcbeautify
+            CODE_SIGNING_REQUIRED=NO
 
-      - name: Package IPA manually
+      - name: Verify app bundle
         working-directory: ./iOS
         run: |
-          APP_PATH=""
-          # The archive puts the .app in Products/Applications
-          if [ -d "build/ScreenCast.xcarchive/Products/Applications" ]; then
-            APP_PATH=$(find build/ScreenCast.xcarchive/Products/Applications -name "*.app" -maxdepth 1 | head -1)
-          fi
-          # Fallback: search DerivedData
+          APP_PATH=$(find build/ScreenCast.xcarchive/Products/Applications -maxdepth 1 -name "*.app" | head -1)
+          echo "App bundle: $APP_PATH"
+          echo "--- binary info ---"
+          lipo -info "$APP_PATH/ScreenCast"
+          echo "--- Info.plist keys ---"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :UIDeviceFamily" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :MinimumOSVersion" "$APP_PATH/Info.plist"
+          echo "--- bundle contents ---"
+          ls -la "$APP_PATH"
+
+      - name: Package IPA
+        working-directory: ./iOS
+        run: |
+          APP_PATH=$(find build/ScreenCast.xcarchive/Products/Applications -maxdepth 1 -name "*.app" | head -1)
           if [ -z "$APP_PATH" ]; then
-            APP_PATH=$(find build/DerivedData -name "*.app" | head -1)
-          fi
-          if [ -z "$APP_PATH" ]; then
-            echo "Built .app not found."
-            echo "Archive contents:"
-            find build/ScreenCast.xcarchive -maxdepth 4 -type d 2>/dev/null || echo "No archive found"
+            echo "No .app found in archive:"
+            find build/ScreenCast.xcarchive -maxdepth 4 -type d
             exit 1
           fi
-          echo "Found app at: $APP_PATH"
-          ls -la "$APP_PATH"
           rm -rf build/ipa
           mkdir -p build/ipa/Payload
           cp -R "$APP_PATH" build/ipa/Payload/
           cd build/ipa
           zip -qr ../ScreenCast.ipa Payload
           echo "IPA created:"
+          unzip -l ../ScreenCast.ipa | head -25
           ls -la ../ScreenCast.ipa
 
       - name: Upload IPA as artifact
@@ -92,7 +100,7 @@ jobs:
           retention-days: 30
 
       - name: Create GitHub Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}

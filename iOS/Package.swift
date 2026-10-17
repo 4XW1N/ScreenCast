@@ -13,13 +13,7 @@ let package = Package(
         .executableTarget(
             name: "ScreenCast",
             path: "Sources/ScreenCast",
-            exclude: ["Info.plist"],
-            resources: [
-                .process("Resources")
-            ],
-            swiftSettings: [
-                .unsafeFlags(["-parse-as-library"])
-            ]
+            exclude: ["Info.plist"]
         )
     ]
 )
