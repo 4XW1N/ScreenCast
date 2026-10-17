@@ -40,6 +40,9 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
@@ -56,8 +59,8 @@ jobs:
 
       - name: Sign APK
         run: |
-          /home/aswin/jdk-17.0.2/bin/keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" 2>/dev/null || true
-          /home/aswin/Android/Sdk/build-tools/34.0.0/apksigner sign --ks debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android app/build/outputs/apk/release/app-release-unsigned.apk
+          keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
@@ -75,21 +78,22 @@ jobs:
           body: |
             ## ScreenCast Android Sender - Auto Build
 
-            ### Download
-            - **APK**: Download the `app-release-unsigned.apk` asset below
-
             ### How to Install
-            1. Download `app-release-unsigned.apk` to your Android phone
-            2. Enable "Install unknown apps" in Settings if prompted
-            3. Open the APK to install
-            4. Open ScreenCast app
+            1. Download `app-release-unsigned.apk` from the artifacts
+            2. Transfer to your Android phone
+            3. Enable "Install unknown apps" in Settings
+            4. Open the APK to install
 
             ### How to Use
-            1. Tap **"Start Casting"** on Android
-            2. Grant screen capture permission
-            3. Note the IP address shown (e.g., `192.168.1.50`)
-            4. On iPad, enter this IP in the ScreenCast receiver app
-            5. Tap Connect
+            1. Open ScreenCast app
+            2. Tap "Start Casting"
+            3. Grant screen capture permission
+            4. Note the IP address shown
+
+            ### Connect iPad
+            1. Open ScreenCast Receiver on iPad
+            2. Enter the Android IP address
+            3. Tap Connect
 
           files: Android/app/build/outputs/apk/release/app-release-unsigned.apk
           generate_release_notes: true
