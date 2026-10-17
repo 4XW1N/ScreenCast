@@ -7,7 +7,9 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.ImageFormat
+import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.hardware.display.DisplayManager
@@ -111,8 +113,8 @@ class ScreenCastService : Service() {
                 }
             }, handler)
 
-            imageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 2)
-            Log.i(TAG, "imageReader created")
+            imageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
+            Log.i(TAG, "imageReader created (RGBA_8888)")
 
             virtualDisplay = mediaProjection!!.createVirtualDisplay(
                 "ScreenCast",
@@ -208,66 +210,37 @@ class ScreenCastService : Service() {
                 if (frameCount < 3) Log.w(TAG, "acquireLatestImage returned null (frameCount=$frameCount)")
                 return null
             }
-            val w = image.width
-            val h = image.height
-            val nv21 = yuv420ToNv21(image)
+            val width = image.width
+            val height = image.height
+            val planes = image.planes
+            val buffer = planes[0].buffer
+            val pixelStride = planes[0].pixelStride
+            val rowStride = planes[0].rowStride
+            val rowPadding = rowStride - pixelStride * width
+
+            // Copy RGBA pixels into a padded bitmap, then crop to the real size
+            val padded = Bitmap.createBitmap(
+                width + rowPadding / pixelStride,
+                height,
+                Bitmap.Config.ARGB_8888
+            )
+            padded.copyPixelsFromBuffer(buffer)
             image.close()
 
-            val yuvImage = YuvImage(nv21, ImageFormat.NV21, w, h, null)
+            val bitmap = if (rowPadding == 0) padded else Bitmap.createBitmap(padded, 0, 0, width, height)
             val output = ByteArrayOutputStream()
-            yuvImage.compressToJpeg(Rect(0, 0, w, h), quality, output)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, output)
+            if (bitmap !== padded) bitmap.recycle()
+            padded.recycle()
+
             val bytes = output.toByteArray()
             frameCount++
-            if (frameCount <= 3) Log.i(TAG, "frame #$frameCount ${w}x$h jpeg=${bytes.size} bytes")
+            if (frameCount <= 3) Log.i(TAG, "frame #$frameCount ${width}x$height jpeg=${bytes.size} bytes")
             bytes
         } catch (e: Exception) {
             Log.e(TAG, "captureFrame failed", e)
             null
         }
-    }
-
-    private fun yuv420ToNv21(image: Image): ByteArray {
-        val width = image.width
-        val height = image.height
-        val yPlane = image.planes[0]
-        val uPlane = image.planes[1]
-        val vPlane = image.planes[2]
-
-        val yBuffer = yPlane.buffer
-        val uBuffer = uPlane.buffer
-        val vBuffer = vPlane.buffer
-
-        val yRowStride = yPlane.rowStride
-        val uvRowStride = uPlane.rowStride
-        val uvPixelStride = uPlane.pixelStride
-
-        val nv21 = ByteArray(width * height * 3 / 2)
-
-        // Copy the Y plane
-        val yRow = ByteArray(yRowStride)
-        var pos = 0
-        for (r in 0 until height) {
-            yBuffer.position(r * yRowStride)
-            val remaining = yBuffer.remaining()
-            val toRead = minOf(yRowStride, remaining)
-            yBuffer.get(yRow, 0, toRead)
-            System.arraycopy(yRow, 0, nv21, pos, width)
-            pos += width
-        }
-
-        // Interleave V and U planes (NV21 = V then U)
-        val uvHeight = height / 2
-        val uvWidth = width / 2
-        var uvPos = width * height
-        for (r in 0 until uvHeight) {
-            for (c in 0 until uvWidth) {
-                val uIndex = r * uvRowStride + c * uvPixelStride
-                val vIndex = r * vPlane.rowStride + c * vPlane.pixelStride
-                nv21[uvPos++] = vBuffer.get(vIndex)
-                nv21[uvPos++] = uBuffer.get(uIndex)
-            }
-        }
-        return nv21
     }
 
     private fun createNotification(text: String): Notification {
