@@ -95,6 +95,13 @@ class ScreenCastService : Service() {
             handlerThread?.start()
             handler = android.os.Handler(handlerThread!!.looper)
 
+            // Android 14 (API 34) requires a registered callback before creating the virtual display
+            mediaProjection!!.registerCallback(object : MediaProjection.Callback() {
+                override fun onStop() {
+                    isRunning = false
+                }
+            }, handler)
+
             imageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 2)
 
             virtualDisplay = mediaProjection!!.createVirtualDisplay(
@@ -139,9 +146,9 @@ class ScreenCastService : Service() {
             while (isRunning && !serverSocket!!.isClosed) {
                 try {
                     val client = serverSocket!!.accept()
-                    handler?.post {
+                    Thread {
                         handleClient(client)
-                    }
+                    }.start()
                 } catch (e: Exception) {
                     if (isRunning) e.printStackTrace()
                 }
@@ -184,20 +191,61 @@ class ScreenCastService : Service() {
             val image = imageReader?.acquireLatestImage() ?: return null
             val w = image.width
             val h = image.height
+            val nv21 = yuv420ToNv21(image)
+            image.close()
 
-            // YUV_420_888 has multiple planes; convert to JPEG via YuvImage
-            val yuvImage = YuvImage(
-                image.planes[0].buffer.array(),
-                ImageFormat.NV21, w, h, null
-            )
+            val yuvImage = YuvImage(nv21, ImageFormat.NV21, w, h, null)
             val output = ByteArrayOutputStream()
             yuvImage.compressToJpeg(Rect(0, 0, w, h), quality, output)
-            image.close()
             output.toByteArray()
         } catch (e: Exception) {
             e.printStackTrace()
             null
         }
+    }
+
+    private fun yuv420ToNv21(image: Image): ByteArray {
+        val width = image.width
+        val height = image.height
+        val yPlane = image.planes[0]
+        val uPlane = image.planes[1]
+        val vPlane = image.planes[2]
+
+        val yBuffer = yPlane.buffer
+        val uBuffer = uPlane.buffer
+        val vBuffer = vPlane.buffer
+
+        val yRowStride = yPlane.rowStride
+        val uvRowStride = uPlane.rowStride
+        val uvPixelStride = uPlane.pixelStride
+
+        val nv21 = ByteArray(width * height * 3 / 2)
+
+        // Copy the Y plane
+        val yRow = ByteArray(yRowStride)
+        var pos = 0
+        for (r in 0 until height) {
+            yBuffer.position(r * yRowStride)
+            val remaining = yBuffer.remaining()
+            val toRead = minOf(yRowStride, remaining)
+            yBuffer.get(yRow, 0, toRead)
+            System.arraycopy(yRow, 0, nv21, pos, width)
+            pos += width
+        }
+
+        // Interleave V and U planes (NV21 = V then U)
+        val uvHeight = height / 2
+        val uvWidth = width / 2
+        var uvPos = width * height
+        for (r in 0 until uvHeight) {
+            for (c in 0 until uvWidth) {
+                val uIndex = r * uvRowStride + c * uvPixelStride
+                val vIndex = r * vPlane.rowStride + c * vPlane.pixelStride
+                nv21[uvPos++] = vBuffer.get(vIndex)
+                nv21[uvPos++] = uBuffer.get(uIndex)
+            }
+        }
+        return nv21
     }
 
     private fun createNotification(text: String): Notification {
