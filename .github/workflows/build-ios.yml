@@ -69,7 +69,6 @@ jobs:
             2. On iPad, enter Android phone's IP address
             3. Tap Connect
           files: ./iOS/build/ScreenCast.ipa
-          generate_release_notes: true
           draft: false
           prerelease: false
         env:
