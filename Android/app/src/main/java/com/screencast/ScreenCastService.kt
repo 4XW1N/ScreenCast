@@ -152,8 +152,7 @@ class ScreenCastService : Service() {
             val out = java.io.DataOutputStream(client.outputStream)
 
             out.writeBytes("HTTP/1.1 200 OK\r\n")
-            out.writeBytes("Connection: close\r\n")
-            out.writeBytes("Content-Type: multipart/x-mixed-replace; boundary=--frameboundary\r\n")
+            out.writeBytes("Content-Type: multipart/x-mixed-replace; boundary=frameboundary\r\n")
             out.writeBytes("\r\n")
             out.flush()
 
